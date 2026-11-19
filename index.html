@@ -123,6 +123,12 @@ textarea{font:400 1rem var(--f-body);color:var(--ink);background:var(--field);bo
 .ph input{font:400 .9rem var(--f-body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0;width:100%}
 .file{display:none}
 label.btn{display:inline-flex;align-items:center}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:12px}
+.rb{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:8px;padding:10px 12px;background:var(--field);display:flex;flex-direction:column;gap:2px;min-width:0}
+.rb span{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rb b{font:600 1.5rem/1.1 var(--f-mono);font-variant-numeric:tabular-nums}
+.rb small{font:.78rem var(--f-mono);color:var(--muted)}
+table.cap select{appearance:auto}
 .esps{display:flex;flex-direction:column;gap:2px;padding:2px 0;min-width:84px}
 .esps label{display:flex;align-items:center;gap:2px;padding-left:4px}
 .esps small{font:600 10px var(--f-body);color:var(--muted);text-transform:uppercase;min-width:34px;text-align:left}
@@ -247,8 +253,9 @@ label.btn{display:inline-flex;align-items:center}
         <label class="f"><span id="l-esp1">Espesor suelto (cm)</span><input id="c-esp" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f" id="w-esp2" hidden><span id="l-esp2">Espesor centro (cm)</span><input id="c-esp2" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f" id="w-esp3" hidden>Espesor derecho (cm)<input id="c-esp3" inputmode="decimal" style="background:var(--hi-soft)"></label>
-        <label class="f">Lado o franja<input id="c-lado" style="background:var(--hi-soft)"></label>
+        <label class="f">Lado o carril<select id="c-lado" style="background:var(--hi-soft)"></select></label>
         <label class="f">Calzada o cuerpo<input id="c-calz" style="background:var(--hi-soft)"></label>
+        <label class="f">Volumen por camión (m³)<input id="c-vcam" inputmode="decimal" placeholder="14" style="background:var(--hi-soft)"></label>
       </div>
       <div id="temps-box" style="margin-top:12px" hidden>
         <div class="temps">
@@ -258,12 +265,13 @@ label.btn{display:inline-flex;align-items:center}
         </div>
         <div class="actions" style="margin-top:10px"><button class="btn hi" id="b-rand">Generar temperaturas</button></div>
       </div>
+      <div class="res" id="c-res"></div>
       <p class="muted" id="c-dist" style="margin:10px 0 0"></p>
     </section>
 
     <section class="panel">
       <h2>Viajes</h2>
-      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span><b>Del km / Al km</b>: se encadenan solos desde el km inicial; si escribes el inicio y el fin de un camión (24350 o 24.350), la longitud sale sola.</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
+      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span><b>Del km / Al km</b>: escribe el inicio y el fin de cada camión (24350 o 24.350) y la longitud y el volumen salen solos. Si dejas el inicio vacío, arranca donde terminó el anterior.</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
       <div class="scroll"><table class="cap" id="tbl"></table></div>
     </section>
 
@@ -381,6 +389,12 @@ function espAvg(r){const v=espVals(r);if(v.some(x=>x==null))return null;return v
 const espDef=()=>espAvg({});
 const f2=n=>n==null?"":(Math.round(n*100)/100).toString();
 
+/* ---------- Lado o carril ---------- */
+const LADOS=[["Lado",[["IZQ","Izquierdo"],["CENTRAL","Central"],["DER","Derecho"]]],["Carril",[["CARRIL BAJA","Carril de baja"],["CARRIL MEDIA","Carril media"],["CARRIL ALTA","Carril alta"]]]];
+const ladoLbl=v=>{for(const[,g]of LADOS)for(const[k,l]of g)if(k===v)return l;return v};
+function ladoOpts(cur,row){const known=LADOS.flatMap(([,g])=>g.map(x=>x[0]));
+  return(row?`<option value="">= ${esc(ladoLbl(J.c.lado||""))}</option>`:"")+LADOS.map(([t,g])=>`<optgroup label="${t}">${g.map(([k,l])=>`<option value="${k}"${k===cur?" selected":""}>${l}</option>`).join("")}</optgroup>`).join("")+(cur&&!known.includes(cur)?`<option value="${esc(cur)}" selected>${esc(cur)}</option>`:"")}
+
 /* ---------- Cálculo ---------- */
 /* Cadenamiento: acepta 24+350, 24350 o 24.350 */
 function pkm(v){const t=String(v??"").trim();if(!t)return null;let m=t.match(/^(\d+)\s*\+\s*(\d{1,3}(?:[.,]\d+)?)$/);if(m)return +m[1]*1000+parseFloat(m[2].replace(",","."));
@@ -391,10 +405,10 @@ function computed(){
   let pos=pkm(J.c.km),dir=1;const out=[];let tv=0,tl=0;
   for(const r of J.rows){
     const a=num(r.ancho)??num(J.c.ancho), e=espAvg(r);
-    const o={on:rowActive(r),a,e,vol:null,lon:null,del:null,al:null,lonKm:false};
+    const kd=pkm(r.kd),ka=pkm(r.ka);
+    const o={on:J.tipo==="REAL"?(num(r.lon)>0||(ka!=null&&(kd??pos)!=null)):rowActive(r),a,e,vol:null,lon:null,del:null,al:null,lonKm:false};
     if(o.on){
-      const kd=pkm(r.kd),ka=pkm(r.ka);
-      if(J.tipo==="REAL"){o.lon=num(r.lon);if(o.lon==null&&kd!=null&&ka!=null){o.lon=Math.abs(ka-kd);o.lonKm=true}o.vol=(a&&e&&o.lon!=null)?r2(o.lon*a*e/100):null}
+      if(J.tipo==="REAL"){o.lon=num(r.lon);if(o.lon==null&&ka!=null&&(kd??pos)!=null){o.lon=Math.abs(ka-(kd??pos));o.lonKm=true}o.vol=(a&&e&&o.lon!=null)?r2(o.lon*a*e/100):null}
       else{o.vol=num(r.vol);o.lon=(a&&e)?o.vol/(a*e/100):null}
       o.del=kd??pos;
       if(ka!=null){o.al=ka;if(o.del!=null&&ka!==o.del)dir=ka>o.del?1:-1}
@@ -416,7 +430,7 @@ function randTemps(only){
 }
 
 /* ---------- Tabla de captura ---------- */
-const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2" id="th-esp">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th><th rowspan="2" style="background:var(--accent);color:var(--accent-ink)">Longitud (m)</th></tr>
+const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2" id="th-esp">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th></tr>
 <tr><th>Camión</th><th>Vol. (m³)</th><th>Salida planta</th><th>Descarga tramo</th><th>Al salir de planta</th><th>Al tender</th><th>Al compactar</th><th>Del km</th><th>Al km</th><th>Lado o franja</th><th>Calzada o cuerpo</th><th>Ancho (m)</th></tr></thead>`;
 function inp(i,k,val,attrs){return`<input data-i="${i}" data-k="${k}" value="${esc(val)}" ${attrs||""}>`}
 function renderTable(){
@@ -431,14 +445,13 @@ function renderTable(){
      `<td${y}>${inp(i,"sal",r.sal,'type="time"')}</td><td${y}>${inp(i,"des",r.des,'type="time"')}</td>`+
      [0,1,2].map(k=>`<td${y}>${inp(i,"t"+k,r.t[k],'inputmode="numeric"')}</td>`).join("")+
      `<td${y}>${inp(i,"kd",r.kd,`inputmode="decimal" data-ph="del" placeholder="${c.on?km(c.del):""}" style="min-width:76px"`)}</td><td${y}>${inp(i,"ka",r.ka,`inputmode="decimal" data-ph="al" placeholder="${c.on?km(c.al):""}" style="min-width:76px"`)}</td>`+
-     `<td${y}>${inp(i,"lado",r.lado,`placeholder="${esc(J.c.lado)}"`)}</td><td${y}>${inp(i,"calz",r.calz,`placeholder="${esc(J.c.calz)}"`)}</td>`+
+     `<td${y}><select data-i="${i}" data-k="lado" style="min-width:104px">${ladoOpts(r.lado,true)}</select></td><td${y}>${inp(i,"calz",r.calz,`placeholder="${esc(J.c.calz)}"`)}</td>`+
      `<td${y}>${inp(i,"ancho",r.ancho,`inputmode="decimal" placeholder="${esc(J.c.ancho)}"`)}</td>`+
      `<td${y}><div class="esps">${EKEYS().map(k=>`<label>${nEsp()>1?`<small>${ELAB[k]}</small>`:""}${inp(i,k,r[k],`inputmode="decimal" placeholder="${esc(J.c[k])}"`)}</label>`).join("")}${nEsp()>1?`<span class="eavg" data-o="eavg">${c.e!=null?"prom. "+f2(c.e):""}</span>`:""}</div></td>`+
      `<td${y}>${inp(i,"obs",r.obs,'style="min-width:120px"')}</td>`+
-     (R?`<td${y}>${inp(i,"lon",r.lon,`inputmode="decimal" data-ph="lon" placeholder="${c.lonKm?c.lon.toFixed(1):""}"`)}</td>`:`<td class="calc" data-o="lon">${c.lon!=null?c.lon.toFixed(1):""}</td>`)+
      "</tr>";
   });
-  h+=`</tbody><tfoot><tr><td>Total</td><td data-o="tv">${C.tv||""}</td><td colspan="12"></td><td data-o="tl">${C.tl?C.tl.toFixed(1):""}</td></tr></tfoot>`;
+  h+=`</tbody><tfoot><tr><td>Total</td><td data-o="tv">${C.tv||""}</td><td colspan="11"></td><td colspan="2" data-o="tl" style="text-align:left">${C.tl?"Longitud total: "+C.tl.toFixed(1)+" m":""}</td></tr></tfoot>`;
   $("tbl").innerHTML=h;
   refreshCalc();
 }
@@ -446,15 +459,20 @@ function refreshCalc(){
   const C=computed(),R=J.tipo==="REAL",trs=$("tbl").tBodies[0].rows;
   C.rows.forEach((c,i)=>{const tr=trs[i];
     const set=(o,v)=>{const td=tr.querySelector(`[data-o="${o}"]`);if(td)td.textContent=v};
-    if(R)set("vol",c.vol??"");else set("lon",c.lon!=null?c.lon.toFixed(1):"");
+    if(R)set("vol",c.vol??"");
     const ph=(o,v)=>{const q=tr.querySelector(`[data-ph="${o}"]`);if(q)q.placeholder=v};
-    ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");ph("lon",c.lonKm?c.lon.toFixed(1):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
+    ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
   });
-  const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
-  const a=num(J.c.ancho),e=espDef();
-  const per=(a&&e)?(14/(a*e/100)):null;
-  $("c-dist").textContent=(per?`Un camión de 14 m³ cubre ${per.toFixed(1)} m con ${a} m de ancho y ${f2(e)} cm${nEsp()>1?" (promedio)":""}. `:"Pon ancho y espesor para calcular la distancia por camión. ")+
-    (C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"");
+  const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?"Longitud total: "+C.tl.toFixed(1)+" m":"";
+  const a=num(J.c.ancho),e=espDef(),vc=num(J.c.vcam)??14,k0=pkm(J.c.km);
+  const per=(a&&e&&vc)?(vc/(a*e/100)):null;
+  const kmd=m=>{if(m==null)return"";const k=Math.floor(m/1000),r=m-k*1000;return k+"+"+(Math.round(r*10)/10).toFixed(1).padStart(5,"0")};
+  const box=(t,v,sub)=>`<div class="rb"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:""}</div>`;
+  $("c-res").innerHTML=per?box(`Longitud con ${f2(vc)} m³`,per.toFixed(1)+" m",`${f2(a)} m de ancho · ${f2(e)} cm${nEsp()>1?" (promedio)":""}`)+
+    (k0!=null?box("Desde el km inicial llega al",kmd(k0+per),`del ${kmd(k0)}`):"")+
+    (C.fin!=null&&C.tl?box("Siguiente camión llega al",kmd(C.fin+per),`sale del ${kmd(C.fin)}`):"")
+    :'<p class="muted" style="margin:0">Pon ancho, espesor y volumen del camión para saber hasta qué cadenamiento llega.</p>';
+  $("c-dist").textContent=C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"";
 }
 $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;const r=J.rows[+t.dataset.i],k=t.dataset.k;
   if(k[0]==="t"&&k.length===2)r.t[+k[1]]=t.value;else r[k]=t.value;
@@ -464,14 +482,14 @@ $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;co
 
 /* ---------- Encabezado y calculadora ---------- */
 const HF=["fecha","recibo","ensaye","obra","ubic","capa","planta","desv","espproy","lab","jefe"];
-const CF=["km","ancho","nesp","esp","esp2","esp3","lado","calz"];
+const CF=["km","ancho","nesp","esp","esp2","esp3","lado","calz","vcam"];
 function espUi(){const n=nEsp();$("w-esp2").hidden=n<3;$("w-esp3").hidden=n<2;$("l-esp1").textContent=n===1?"Espesor suelto (cm)":"Espesor izquierdo (cm)"}
 function fillForm(){
-  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");if(!J.c.nesp)J.c.nesp="1";renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
+  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");if(!J.c.nesp)J.c.nesp="1";if(!J.c.vcam)J.c.vcam="14";$("c-lado").innerHTML=ladoOpts(J.c.lado||"IZQ",false);renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
   for(let i=0;i<3;i++){$("tx"+i).value=J.c.tx[i];$("tn"+i).value=J.c.tn[i]}espUi();
   const R=J.tipo==="REAL";$("m-real").setAttribute("aria-pressed",R);$("m-calc").setAttribute("aria-pressed",!R);
   $("temps-box").hidden=R;$("b-copy").hidden=!R;
-  $("modo-txt").textContent=R?"REAL: lo que tomas en campo. Capturas la longitud de cada camión y el volumen sale solo (longitud × ancho × espesor). Los cadenamientos se encadenan desde el km inicial.":"CALCULADO: capturas el volumen de cada camión; la longitud y los cadenamientos salen solos y las temperaturas se generan al azar entre la mínima y la máxima.";
+  $("modo-txt").textContent=R?"REAL: lo que tomas en campo. Capturas del km y al km de cada camión, y la longitud y el volumen salen solos (longitud × ancho × espesor).":"CALCULADO: capturas el volumen de cada camión; la longitud y los cadenamientos salen solos y las temperaturas se generan al azar entre la mínima y la máxima.";
   $("estado").textContent=J.id?("Guardada · "+(J.tipo==="REAL"?"REAL":"CALCULADO")+" · "+fmtF(J.h.fecha)):"Jornada nueva, sin guardar";
   renderTable();
 }
@@ -480,7 +498,7 @@ const RF=["emp","res","clima","tamb","ubic","lat","lng","notas"];
 RF.forEach(k=>$("r-"+k).addEventListener(k==="emp"||k==="clima"?"change":"input",e=>{
   if(k==="emp"&&e.target.value==="__nueva__"){$("emp-new").hidden=false;$("emp-new-n").focus();e.target.value=J.reg.emp||"";return}
   J.reg[k]=e.target.value;markDirty();if(k==="lat"||k==="lng"||k==="ubic")satLink()}));
-CF.forEach(k=>$("c-"+k).addEventListener(k==="nesp"?"change":"input",e=>{J.c[k]=e.target.value;markDirty();if(k==="nesp")espUi();if(k!=="km")renderTable();else refreshCalc()}));
+CF.forEach(k=>$("c-"+k).addEventListener(k==="nesp"||k==="lado"?"change":"input",e=>{J.c[k]=e.target.value;markDirty();if(k==="nesp")espUi();if(k!=="km"&&k!=="vcam")renderTable();else refreshCalc()}));
 for(let i=0;i<3;i++){$("tx"+i).addEventListener("input",e=>{J.c.tx[i]=e.target.value;markDirty()});$("tn"+i).addEventListener("input",e=>{J.c.tn[i]=e.target.value;markDirty()})}
 $("b-rand").onclick=()=>{randTemps(false);renderTable();markDirty();toast("Temperaturas generadas")};
 function setMode(t){if(J.tipo===t)return;J.tipo=t;if(t==="CALC")randTemps(true);markDirty();fillForm()}
