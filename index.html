@@ -271,7 +271,7 @@ table.cap select{appearance:auto}
 
     <section class="panel">
       <h2>Viajes</h2>
-      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span><b>Del km / Al km</b>: escribe el inicio y el fin de cada camión (24350 o 24.350) y la longitud y el volumen salen solos. Si dejas el inicio vacío, arranca donde terminó el anterior.</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
+      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span><b>Al km o Longitud</b>: escribe uno de los dos y el otro sale solo (24350 o 24.350 para el km). El Del km arranca donde terminó el camión anterior; si lo escribes, manda el tuyo.</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
       <div class="scroll"><table class="cap" id="tbl"></table></div>
     </section>
 
@@ -430,7 +430,7 @@ function randTemps(only){
 }
 
 /* ---------- Tabla de captura ---------- */
-const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2" id="th-esp">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th></tr>
+const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2" id="th-esp">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th><th rowspan="2" style="background:var(--accent);color:var(--accent-ink)">Longitud (m)</th></tr>
 <tr><th>Camión</th><th>Vol. (m³)</th><th>Salida planta</th><th>Descarga tramo</th><th>Al salir de planta</th><th>Al tender</th><th>Al compactar</th><th>Del km</th><th>Al km</th><th>Lado o franja</th><th>Calzada o cuerpo</th><th>Ancho (m)</th></tr></thead>`;
 function inp(i,k,val,attrs){return`<input data-i="${i}" data-k="${k}" value="${esc(val)}" ${attrs||""}>`}
 function renderTable(){
@@ -449,9 +449,10 @@ function renderTable(){
      `<td${y}>${inp(i,"ancho",r.ancho,`inputmode="decimal" placeholder="${esc(J.c.ancho)}"`)}</td>`+
      `<td${y}><div class="esps">${EKEYS().map(k=>`<label>${nEsp()>1?`<small>${ELAB[k]}</small>`:""}${inp(i,k,r[k],`inputmode="decimal" placeholder="${esc(J.c[k])}"`)}</label>`).join("")}${nEsp()>1?`<span class="eavg" data-o="eavg">${c.e!=null?"prom. "+f2(c.e):""}</span>`:""}</div></td>`+
      `<td${y}>${inp(i,"obs",r.obs,'style="min-width:120px"')}</td>`+
+     (R?`<td${y}>${inp(i,"lon",r.lon,`inputmode="decimal" data-ph="lon" placeholder="${c.lonKm?c.lon.toFixed(1):""}" style="min-width:70px"`)}</td>`:`<td class="calc" data-o="lon">${c.lon!=null?c.lon.toFixed(1):""}</td>`)+
      "</tr>";
   });
-  h+=`</tbody><tfoot><tr><td>Total</td><td data-o="tv">${C.tv||""}</td><td colspan="11"></td><td colspan="2" data-o="tl" style="text-align:left">${C.tl?"Longitud total: "+C.tl.toFixed(1)+" m":""}</td></tr></tfoot>`;
+  h+=`</tbody><tfoot><tr><td>Total</td><td data-o="tv">${C.tv||""}</td><td colspan="12"></td><td data-o="tl">${C.tl?C.tl.toFixed(1):""}</td></tr></tfoot>`;
   $("tbl").innerHTML=h;
   refreshCalc();
 }
@@ -459,11 +460,11 @@ function refreshCalc(){
   const C=computed(),R=J.tipo==="REAL",trs=$("tbl").tBodies[0].rows;
   C.rows.forEach((c,i)=>{const tr=trs[i];
     const set=(o,v)=>{const td=tr.querySelector(`[data-o="${o}"]`);if(td)td.textContent=v};
-    if(R)set("vol",c.vol??"");
+    if(R)set("vol",c.vol??"");else set("lon",c.lon!=null?c.lon.toFixed(1):"");
     const ph=(o,v)=>{const q=tr.querySelector(`[data-ph="${o}"]`);if(q)q.placeholder=v};
-    ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
+    ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");ph("lon",c.lonKm?c.lon.toFixed(1):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
   });
-  const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?"Longitud total: "+C.tl.toFixed(1)+" m":"";
+  const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
   const a=num(J.c.ancho),e=espDef(),vc=num(J.c.vcam)??14,k0=pkm(J.c.km);
   const per=(a&&e&&vc)?(vc/(a*e/100)):null;
   const kmd=m=>{if(m==null)return"";const k=Math.floor(m/1000),r=m-k*1000;return k+"+"+(Math.round(r*10)/10).toFixed(1).padStart(5,"0")};
@@ -476,6 +477,7 @@ function refreshCalc(){
 }
 $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;const r=J.rows[+t.dataset.i],k=t.dataset.k;
   if(k[0]==="t"&&k.length===2)r.t[+k[1]]=t.value;else r[k]=t.value;
+  if(J.tipo==="REAL"&&t.value.trim()&&(k==="lon"||k==="ka")){const o=k==="lon"?"ka":"lon";r[o]="";const q=t.closest("tr").querySelector(`[data-k="${o}"]`);if(q)q.value=""}
   if(k==="cam"){const m=CAMS.find(c=>c.mat===t.value);if(m&&m.vol&&J.tipo==="CALC"&&!r.vol){r.vol=String(m.vol);const v=t.closest("tr").querySelector('[data-k="vol"]');if(v)v.value=r.vol}}
   if(J.tipo==="CALC"&&(k==="vol"||k==="cam")&&rowActive(r)&&r.t.every(x=>x==="")){randTemps(true);const tr=t.closest("tr");[0,1,2].forEach(n=>{const q=tr.querySelector(`[data-k="t${n}"]`);if(q)q.value=r.t[n]})}
   markDirty();refreshCalc()});
@@ -489,7 +491,7 @@ function fillForm(){
   for(let i=0;i<3;i++){$("tx"+i).value=J.c.tx[i];$("tn"+i).value=J.c.tn[i]}espUi();
   const R=J.tipo==="REAL";$("m-real").setAttribute("aria-pressed",R);$("m-calc").setAttribute("aria-pressed",!R);
   $("temps-box").hidden=R;$("b-copy").hidden=!R;
-  $("modo-txt").textContent=R?"REAL: lo que tomas en campo. Capturas del km y al km de cada camión, y la longitud y el volumen salen solos (longitud × ancho × espesor).":"CALCULADO: capturas el volumen de cada camión; la longitud y los cadenamientos salen solos y las temperaturas se generan al azar entre la mínima y la máxima.";
+  $("modo-txt").textContent=R?"REAL: lo que tomas en campo. De cada camión capturas el Al km o la longitud (el otro sale solo) y el volumen se calcula (longitud × ancho × espesor).":"CALCULADO: capturas el volumen de cada camión; la longitud y los cadenamientos salen solos y las temperaturas se generan al azar entre la mínima y la máxima.";
   $("estado").textContent=J.id?("Guardada · "+(J.tipo==="REAL"?"REAL":"CALCULADO")+" · "+fmtF(J.h.fecha)):"Jornada nueva, sin guardar";
   renderTable();
 }
