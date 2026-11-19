@@ -128,6 +128,11 @@ label.btn{display:inline-flex;align-items:center}
 @media (max-width:420px){.span2{grid-column:auto}}
 .thumbs{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .thumbs img{width:54px;height:54px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.cloud{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:8px;padding:12px 14px;margin-bottom:14px;background:var(--field)}
+.cloud-h{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.cloud a{color:var(--ink)}
+.steps{margin:0 0 10px;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:.9rem}
+.sync-pill{font:.72rem var(--f-mono);color:#c9cfcb;margin-left:auto}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -141,7 +146,7 @@ label.btn{display:inline-flex;align-items:center}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA</span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
@@ -271,6 +276,25 @@ label.btn{display:inline-flex;align-items:center}
     <section class="panel">
       <h2>Historial de jornadas</h2>
       <p class="muted" style="margin-top:0">Cada jornada guardada se puede abrir para corregirla, o bajarla otra vez en PDF o Excel.</p>
+      <div id="cloud" class="cloud" hidden>
+        <div class="cloud-h"><b>Respaldo en la nube (GitHub)</b><span id="sync-st" class="muted"></span></div>
+        <div id="cloud-on" hidden>
+          <p class="muted" style="margin:6px 0 10px">Cada jornada que guardas, con sus fotos, se sube sola a tu repositorio <b>tendidos</b>. Lo que captures en otro aparato aparece aquí. Si no hay señal, se sube cuando regresa.</p>
+          <div class="actions"><button class="btn pri" id="b-sync" type="button">Sincronizar ahora</button><button class="btn" id="b-tokcopy" type="button">Copiar mi token</button><button class="btn" id="b-tokchg" type="button">Cambiar token</button></div>
+        </div>
+        <div id="cloud-off">
+          <p class="muted" style="margin:6px 0 8px">Pega una sola vez tu token de GitHub en este aparato y todo se respalda solo, igual que en la Bitácora.</p>
+          <ol class="steps">
+            <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → nuevo token</a>.</li>
+            <li>Nombre: Tendidos. Expiración: la más larga que te deje.</li>
+            <li>Repository access: <b>Only select repositories</b> → <b>tendidos</b>. Si quieres un solo token para todo, agrega también BITACORA-DE-OBRA y CALAS-TERRACERIAS.</li>
+            <li>Permissions → Repository permissions → <b>Contents: Read and write</b>.</li>
+            <li>Toca <b>Generate token</b>, cópialo y pégalo aquí.</li>
+          </ol>
+          <div class="row"><label class="f" style="flex:1 1 240px">Token<input id="tok" placeholder="github_pat_…" autocomplete="off" autocapitalize="off" spellcheck="false"></label><button class="btn pri" id="b-tok" type="button">Activar respaldo</button></div>
+        </div>
+        <p class="muted" id="cloud-msg" style="margin:8px 0 0"></p>
+      </div>
       <div id="bk" class="actions" style="margin-bottom:12px" hidden>
         <button class="btn" id="b-bk" type="button">Descargar respaldo</button>
         <label class="btn" for="bk-file">Restaurar respaldo</label><input type="file" id="bk-file" class="file" accept=".json,application/json">
@@ -446,7 +470,9 @@ $("b-new-yes").onclick=()=>{$("new-confirm").hidden=true;J=blank(J.tipo);dirty=f
 
 /* ---------- Almacenamiento (db del usuario; respaldo local) ---------- */
 let db=null,uid=null,colJ=null,colC=null,colE=null,local=false;
-const LS={get(k){try{return JSON.parse(localStorage.getItem(k)||"[]")}catch(e){return[]}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k)||"[]")}catch(e){return[]}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}
+  if(!PULLING){if(k==="tj_cam"||k==="tj_emp")try{localStorage.setItem("tj_cat_t",String(Date.now()))}catch(e){}if(typeof autoSync==="function")autoSync()}}};
+let PULLING=false;
 async function initStore(){
   try{
     const c=window.claude;const[d,u]=c?await Promise.all([c.use("db"),c.use("user")]):[null,null];
@@ -460,10 +486,10 @@ async function initStore(){
 }
 async function saveJ(){
   if(pendingUp){toast("Espera a que terminen de subir las fotos");return}
-  const doc={tipo:J.tipo,h:J.h,c:J.c,rows:J.rows,reg:J.reg,fotos:J.fotos.filter(f=>f.id).map(f=>({id:f.id,cap:f.cap||"",...(f.ubic?{ubic:true}:{}),...(f.mapa?{mapa:true}:{})})),upd:Date.now()};
+  const doc={tipo:J.tipo,h:J.h,c:J.c,rows:J.rows,reg:J.reg,fotos:J.fotos.filter(f=>f.id).map(f=>({id:f.id,cap:f.cap||"",...(f.ubic?{ubic:true}:{}),...(f.mapa?{mapa:true}:{}),...(f.file?{file:f.file}:{})})),upd:Date.now()};
   const C=computed();doc.resumen={viajes:C.rows.filter(r=>r.on).length,vol:C.tv,del:km(num(J.c.km)),al:km(C.fin),fotos:doc.fotos.length,emp:J.reg.emp||""};
   try{
-    if(local){if(!J.id)J.id="L"+Date.now();HIS=HIS.filter(x=>x.id!==J.id).concat([{...doc,id:J.id}]);LS.set("tj_his",HIS);renderHis()}
+    if(local){if(!J.id)J.id="L"+Date.now();const prev=HIS.find(x=>x.id===J.id);HIS=HIS.filter(x=>x.id!==J.id).concat([{...doc,id:J.id,...(prev&&prev._sha?{_sha:prev._sha}:{})}]);LS.set("tj_his",HIS);renderHis()}
     else if(J.id)await colJ.doc(J.id).set(doc);
     else{const ref=await colJ.add(doc);J.id=ref.id}
     J.fotos.forEach(f=>f.saved=true);
@@ -491,7 +517,7 @@ $("his-list").addEventListener("click",async e=>{const b=e.target.closest("butto
   if(a==="xls"){const k=J;J=load();await doXLS();J=k}
   if(a==="del")it.querySelector(".confirm").hidden=false;
   if(a==="del-no")it.querySelector(".confirm").hidden=true;
-  if(a==="del-yes"){try{if(assets)for(const f of x.fotos||[])assets.delete(f.id).catch(()=>{});if(local){HIS=HIS.filter(h=>h.id!==x.id);LS.set("tj_his",HIS);renderHis()}else await colJ.doc(x.id).delete();if(J.id===x.id){J.id=null;fillForm()}toast("Jornada borrada")}catch(err){toast("No se pudo borrar.")}}
+  if(a==="del-yes"){try{if(assets)for(const f of x.fotos||[])assets.delete(f.id).catch(()=>{});if(local){if(x._sha){const tb=LS.get("tj_tomb");tb.push({id:x.id,sha:x._sha,fotos:(x.fotos||[]).map(f=>f.file).filter(Boolean)});try{localStorage.setItem("tj_tomb",JSON.stringify(tb))}catch(e){}}HIS=HIS.filter(h=>h.id!==x.id);LS.set("tj_his",HIS);renderHis()}else await colJ.doc(x.id).delete();if(J.id===x.id){J.id=null;fillForm()}toast("Jornada borrada")}catch(err){toast("No se pudo borrar.")}}
 });
 
 /* ---------- Respaldo (versión del teléfono) ---------- */
@@ -504,6 +530,92 @@ $("bk-file").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!
   const merge=(a,b,k)=>{const m=new Map(a.map(x=>[x[k],x]));(b||[]).forEach(x=>m.set(x[k],x));return[...m.values()]};
   HIS=merge(HIS,d.jornadas,"id");CAMS=merge(CAMS,d.camiones,"mat");EMPS=merge(EMPS,d.empresas,"n");LS.set("tj_his",HIS);LS.set("tj_cam",CAMS);LS.set("tj_emp",EMPS);
   renderHis();renderCams();renderEmps();toast(`Respaldo restaurado: ${(d.jornadas||[]).length} jornadas`)}catch(err){toast("Ese archivo no es un respaldo de Tendido.")}};
+
+/* ---------- Respaldo automático en GitHub (versión del teléfono) ---------- */
+const GH={repo:"ingezequieljuv/tendidos",branch:"registros"};
+const tokGet=()=>{for(const k of ["tj_ghtoken","bit_ghtoken","calas_ghtoken"]){try{const v=JSON.parse(localStorage.getItem(k)||"null");if(typeof v==="string"&&v)return v}catch(e){try{const v=localStorage.getItem(k);if(v&&/^(github_pat_|ghp_)/.test(v))return v}catch(x){}}}return""};
+let TOK="";
+function setSync(t){const a=$("sync-st"),b=$("sync-top");if(a)a.textContent=t;if(b)b.textContent=t?" · "+t:""}
+async function gh(path,opt={}){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),opt.timeout||60000);
+  try{return await fetch("https://api.github.com/repos/"+GH.repo+path,{cache:"no-store",...opt,signal:ac.signal,headers:{Accept:opt.raw?"application/vnd.github.raw":"application/vnd.github+json",Authorization:"Bearer "+TOK,"X-GitHub-Api-Version":"2022-11-28",...(opt.headers||{})}})}finally{clearTimeout(tm)}}
+const toB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(b)});
+async function ghSha(p){const r=await gh("/contents/"+p+"?ref="+GH.branch);if(r.status===404)return null;if(!r.ok)throw{status:r.status};return(await r.json()).sha}
+async function ghPut(p,blob,msg,sha){const body={message:msg,content:await toB64(blob),branch:GH.branch};if(sha)body.sha=sha;
+  let r=await gh("/contents/"+p,{method:"PUT",body:JSON.stringify(body),timeout:180000});
+  if(r.status===409||r.status===422){const cur=await ghSha(p);if(cur)body.sha=cur;else delete body.sha;r=await gh("/contents/"+p,{method:"PUT",body:JSON.stringify(body),timeout:180000})}
+  if(!r.ok)throw{status:r.status};return(await r.json()).content.sha}
+async function ghDel(p,msg){const sha=await ghSha(p);if(!sha)return;const r=await gh("/contents/"+p,{method:"DELETE",body:JSON.stringify({message:msg,sha,branch:GH.branch})});if(!r.ok&&r.status!==404)throw{status:r.status}}
+async function ensureBranch(){const r=await gh("/branches/"+GH.branch);if(r.ok)return;if(r.status!==404)throw{status:r.status};
+  const m=await gh("/git/ref/heads/main");if(!m.ok)throw{status:m.status};const sha=(await m.json()).object.sha;
+  const c=await gh("/git/refs",{method:"POST",body:JSON.stringify({ref:"refs/heads/"+GH.branch,sha})});if(!c.ok&&c.status!==422)throw{status:c.status}}
+const extOf=t=>/png/.test(t)?"png":/heic|heif/.test(t)?"heic":/webp/.test(t)?"webp":"jpg";
+const jdate=j=>(j.h&&j.h.fecha)||"sin-fecha";
+let syncing=false,again=false,syncTimer=null;
+function autoSync(){if(IN_CLAUDE||!TOK)return;clearTimeout(syncTimer);syncTimer=setTimeout(runSync,1500)}
+async function runSync(){
+  if(IN_CLAUDE||!TOK)return;if(syncing){again=true;return}if(!navigator.onLine){setSync("sin señal, pendiente de subir");return}
+  syncing=true;setSync("sincronizando…");
+  try{
+    await ensureBranch();
+    let up=new Set(LS.get("tj_up"));const saveUp=()=>{try{localStorage.setItem("tj_up",JSON.stringify([...up]))}catch(e){}};
+    // 1) borrados
+    let tomb=LS.get("tj_tomb");
+    for(const t of tomb.slice()){await ghDel(`jornadas/${t.id}.json`,`Borrar jornada ${t.id}`);for(const f of t.fotos||[])await ghDel(`fotos/${f}`,"Borrar foto").catch(()=>{});
+      tomb=tomb.filter(x=>x.id!==t.id);try{localStorage.setItem("tj_tomb",JSON.stringify(tomb))}catch(e){}}
+    // 2) bajar lo de otros aparatos
+    const lr=await gh("/contents/jornadas?ref="+GH.branch);let remote=[];if(lr.ok)remote=await lr.json();else if(lr.status!==404)throw{status:lr.status};
+    const rmap=new Map(remote.filter(x=>x.name.endsWith(".json")).map(x=>[x.name.slice(0,-5),x.sha]));
+    let changed=false;
+    for(const[id,sha]of rmap){const L=HIS.find(x=>x.id===id);const dirtyL=L&&(L.upd||0)>(L._sync||0);
+      if(L&&(L._sha===sha||dirtyL))continue;if(tomb.some(t=>t.id===id))continue;
+      setSync("bajando jornadas…");const g=await gh(`/contents/jornadas/${id}.json?ref=${GH.branch}`,{raw:true});if(!g.ok)continue;
+      const d=await g.json();
+      for(const f of d.fotos||[]){if(URLS.has(f.id))continue;if(!f.file)continue;const fr=await gh(`/contents/fotos/${encodeURIComponent(f.file)}?ref=${GH.branch}`,{raw:true,timeout:180000});if(!fr.ok)continue;
+        const b=await fr.blob();await idb.put(f.id,b);URLS.set(f.id,URL.createObjectURL(b));up.add(f.id)}
+      saveUp();const rec={...d,id,_sha:sha,_sync:d.upd||0};HIS=HIS.filter(x=>x.id!==id).concat([rec]);changed=true}
+    for(const L of HIS.slice()){if(L._sha&&!rmap.has(L.id)&&!((L.upd||0)>(L._sync||0))){HIS=HIS.filter(x=>x.id!==L.id);for(const f of L.fotos||[])localAssets.delete(f.id).catch(()=>{});changed=true}}
+    if(changed){PULLING=true;LS.set("tj_his",HIS);PULLING=false;renderHis()}
+    // 3) subir lo pendiente
+    const pend=HIS.filter(x=>(x.upd||0)>(x._sync||0));let n=0;
+    for(const j of pend){n++;
+      const fotos=[];for(const f of j.fotos||[]){let file=f.file;
+        if(!up.has(f.id)){const b=await idb.get(f.id);if(b){file=file||`${f.id}.${extOf(b.type||"")}`;setSync(`subiendo foto (${(b.size/1048576).toFixed(1)} MB)…`);await ghPut(`fotos/${file}`,b,`Foto ${file} · jornada ${jdate(j)}`);up.add(f.id);saveUp()}}
+        if(!file){const b=await idb.get(f.id).catch(()=>null);file=`${f.id}.${extOf((b&&b.type)||"")}`}
+        fotos.push({...f,file})}
+      setSync(`subiendo jornada ${n} de ${pend.length}…`);
+      const {_sha,_sync,...clean}=j;const doc={...clean,fotos};
+      const sha=await ghPut(`jornadas/${j.id}.json`,new Blob([JSON.stringify(doc,null,1)],{type:"application/json"}),`Jornada ${j.tipo==="REAL"?"REAL":"CALCULADO"} ${jdate(j)} ${(j.resumen&&j.resumen.del)||""}`.trim(),j._sha);
+      const cur=HIS.find(x=>x.id===j.id);if(cur){cur.fotos=fotos;cur._sha=sha;cur._sync=j.upd||0}}
+    if(pend.length){PULLING=true;LS.set("tj_his",HIS);PULLING=false}
+    // 4) catálogos de camiones y empresas
+    const cr=await gh("/contents/catalogos.json?ref="+GH.branch);let rc=null,rsha=null;
+    if(cr.ok){const j=await cr.json();rsha=j.sha;try{rc=JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g,"")))))}catch(e){}}
+    const lt=+(localStorage.getItem("tj_cat_t")||0);
+    if(rc&&(rc.t||0)>lt){PULLING=true;CAMS=rc.camiones||[];EMPS=rc.empresas||[];LS.set("tj_cam",CAMS);LS.set("tj_emp",EMPS);PULLING=false;try{localStorage.setItem("tj_cat_t",String(rc.t))}catch(e){}renderCams();renderEmps()}
+    else if(lt>((rc&&rc.t)||0)){await ghPut("catalogos.json",new Blob([JSON.stringify({t:lt,camiones:CAMS,empresas:EMPS},null,1)],{type:"application/json"}),"Camiones y empresas",rsha)}
+    const hh=new Date();setSync(`☁️ al día ${String(hh.getHours()).padStart(2,"0")}:${String(hh.getMinutes()).padStart(2,"0")}`);$("cloud-msg").textContent="";
+  }catch(e){
+    const st=e&&e.status;
+    if(st===401){setSync("⚠️ token vencido");$("cloud-msg").textContent="Tu token ya no sirve (venció o lo cambiaste). Toca Cambiar token y pega uno nuevo."}
+    else if(st===403||st===404){setSync("⚠️ sin permiso");$("cloud-msg").textContent="Tu token no tiene permiso en el repositorio tendidos. En GitHub edita el token: Repository access debe incluir tendidos y Contents debe decir Read and write."}
+    else{setSync("sin señal, pendiente de subir");$("cloud-msg").textContent="No se pudo terminar. Se vuelve a intentar sola cuando regrese la señal."}
+  }finally{syncing=false;PULLING=false;if(again){again=false;setTimeout(runSync,800)}}
+}
+function cloudUi(){const on=!!TOK;$("cloud-on").hidden=!on;$("cloud-off").hidden=on;if(!on)setSync("")}
+async function checkTok(t){const prev=TOK;TOK=t;try{const r=await gh("");if(r.ok){const j=await r.json().catch(()=>({}));if(j.permissions&&j.permissions.push===false){TOK=prev;return 403}return true}TOK=prev;return r.status}catch(e){TOK=prev;return 0}}
+$("b-tok").onclick=async()=>{const t=$("tok").value.replace(/\s+/g,"");const m=$("cloud-msg");
+  if(!/^(github_pat_|ghp_)\w{20,}$/.test(t)){m.textContent="Eso no parece un token de GitHub. Debe empezar con github_pat_ y copiarse completo.";return}
+  m.textContent="Revisando el token…";$("b-tok").disabled=true;const ok=await checkTok(t);$("b-tok").disabled=false;
+  if(ok===true){try{localStorage.setItem("tj_ghtoken",JSON.stringify(t))}catch(e){}$("tok").value="";m.textContent="✓ Respaldo activado. Sincronizando…";cloudUi();runSync()}
+  else m.textContent=ok===401?"GitHub dice que ese token no es válido. Revisa que lo copiaste completo.":ok===404||ok===403?"Ese token no tiene acceso al repositorio tendidos. En GitHub edítalo y en Repository access agrega tendidos.":"No se pudo revisar el token. Revisa tu señal."};
+$("b-sync").onclick=()=>runSync();
+$("b-tokchg").onclick=()=>{$("cloud-on").hidden=true;$("cloud-off").hidden=false;$("tok").focus()};
+$("b-tokcopy").onclick=async()=>{try{await navigator.clipboard.writeText(TOK);toast("Token copiado. Pégalo en tu otro aparato.")}catch(e){toast("No se pudo copiar")}};
+async function initCloud(){if(IN_CLAUDE)return;$("cloud").hidden=false;const t=tokGet();
+  if(t){const ok=await checkTok(t);if(ok===true){if(!localStorage.getItem("tj_ghtoken"))try{localStorage.setItem("tj_ghtoken",JSON.stringify(t))}catch(e){}}else if(ok===0)TOK=t}
+  cloudUi();if(TOK)runSync()}
+window.addEventListener("online",()=>autoSync());
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")autoSync()});
 
 /* ---------- Camiones ---------- */
 function renderCams(){
@@ -718,6 +830,7 @@ fillForm();initStore();
   if(!document.querySelector('meta[name="apple-mobile-web-app-title"]')){const m=document.createElement("meta");m.name="apple-mobile-web-app-title";m.content="Tendido";document.head.appendChild(m)}}catch(e){}})();
 (async()=>{try{assets=IN_CLAUDE?await window.claude.use("assets"):null}catch(e){assets=null}
   if(!assets&&!IN_CLAUDE&&window.indexedDB){assets=localAssets;await hydratePhotos();renderPhotos();renderHis()}
+  if(!IN_CLAUDE)initCloud();
   if(!assets){$("ph-hint").textContent="Las fotos solo se pueden agregar desde tu cuenta en la app de Claude.";}})();
 </script>
 
