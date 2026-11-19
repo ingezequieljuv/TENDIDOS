@@ -247,6 +247,7 @@ table.cap select{appearance:auto}
     <section class="panel">
       <h2>Calculadora</h2>
       <div class="grid-h">
+        <label class="f">Sentido del tendido<select id="c-dir" style="background:var(--hi-soft)"><option value="1">Hacia cadenamientos mayores (+)</option><option value="-1">Hacia cadenamientos menores (−)</option></select></label>
         <label class="f">Km inicial (24350 o 24.350)<input id="c-km" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f">Ancho (m)<input id="c-ancho" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f">Espesores por tendido<select id="c-nesp"><option value="1">1 espesor</option><option value="2">2 espesores (izq. y der.)</option><option value="3">3 espesores (izq., centro y der.)</option></select></label>
@@ -366,7 +367,7 @@ function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout
 function blankRow(){return{cam:"",vol:"",mue:"",sal:"",des:"",t:["","",""],kd:"",ka:"",lado:"",calz:"",ancho:"",esp:"",esp2:"",esp3:"",obs:"",lon:""}}
 function blankReg(){return{emp:"",res:"",clima:"",tamb:"",ubic:"",lat:"",lng:"",notas:""}}
 function blank(tipo){return{id:null,tipo:tipo||"REAL",reg:blankReg(),fotos:[],h:{fecha:today(),recibo:today(),ensaye:"",obra:"",ubic:"",capa:"",planta:"",desv:"",espproy:"",lab:"",jefe:""},
-  c:{km:"",ancho:"3.30",esp:"",esp2:"",esp3:"",nesp:"1",lado:"IZQ",calz:"A",tx:["157","146","133"],tn:["153","141","128"]},rows:Array.from({length:NROWS},blankRow)}}
+  c:{km:"",dir:"1",ancho:"3.30",esp:"",esp2:"",esp3:"",nesp:"1",lado:"IZQ",calz:"A",tx:["157","146","133"],tn:["153","141","128"]},rows:Array.from({length:NROWS},blankRow)}}
 let J=blank("REAL"), dirty=false;
 let CAMS=[], HIS=[], EMPS=[], assets=null, pendingUp=0;
 const IN_CLAUDE=!!window.claude;
@@ -402,7 +403,7 @@ function pkm(v){const t=String(v??"").trim();if(!t)return null;let m=t.match(/^(
 const kmPair=r=>pkm(r.kd)!=null&&pkm(r.ka)!=null;
 function rowActive(r){return J.tipo==="REAL"?(num(r.lon)>0||kmPair(r)):num(r.vol)>0}
 function computed(){
-  let pos=pkm(J.c.km),dir=1;const out=[];let tv=0,tl=0;
+  let pos=pkm(J.c.km);const dir=J.c.dir==="-1"?-1:1;const out=[];let tv=0,tl=0;
   for(const r of J.rows){
     const a=num(r.ancho)??num(J.c.ancho), e=espAvg(r);
     const kd=pkm(r.kd),ka=pkm(r.ka);
@@ -411,7 +412,7 @@ function computed(){
       if(J.tipo==="REAL"){o.lon=num(r.lon);if(o.lon==null&&ka!=null&&(kd??pos)!=null){o.lon=Math.abs(ka-(kd??pos));o.lonKm=true}o.vol=(a&&e&&o.lon!=null)?r2(o.lon*a*e/100):null}
       else{o.vol=num(r.vol);o.lon=(a&&e)?o.vol/(a*e/100):null}
       o.del=kd??pos;
-      if(ka!=null){o.al=ka;if(o.del!=null&&ka!==o.del)dir=ka>o.del?1:-1}
+      if(ka!=null){o.al=ka}
       else if(o.del!=null&&o.lon!=null)o.al=o.del+dir*o.lon;
       if(o.al!=null)pos=o.al;
       tv+=o.vol||0;tl+=o.lon||0;
@@ -465,13 +466,13 @@ function refreshCalc(){
     ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");ph("lon",c.lonKm?c.lon.toFixed(1):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
   });
   const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
-  const a=num(J.c.ancho),e=espDef(),vc=num(J.c.vcam)??14,k0=pkm(J.c.km);
+  const a=num(J.c.ancho),e=espDef(),vc=num(J.c.vcam)??14,k0=pkm(J.c.km),sg=J.c.dir==="-1"?-1:1;
   const per=(a&&e&&vc)?(vc/(a*e/100)):null;
   const kmd=m=>{if(m==null)return"";const k=Math.floor(m/1000),r=m-k*1000;return k+"+"+(Math.round(r*10)/10).toFixed(1).padStart(5,"0")};
   const box=(t,v,sub)=>`<div class="rb"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:""}</div>`;
-  $("c-res").innerHTML=per?box(`Longitud con ${f2(vc)} m³`,per.toFixed(1)+" m",`${f2(a)} m de ancho · ${f2(e)} cm${nEsp()>1?" (promedio)":""}`)+
-    (k0!=null?box("Desde el km inicial llega al",kmd(k0+per),`del ${kmd(k0)}`):"")+
-    (C.fin!=null&&C.tl?box("Siguiente camión llega al",kmd(C.fin+per),`sale del ${kmd(C.fin)}`):"")
+  $("c-res").innerHTML=per?box(`Longitud con ${f2(vc)} m³`,per.toFixed(1)+" m",`${f2(a)} m de ancho · ${f2(e)} cm${nEsp()>1?" (promedio)":""} · ${sg>0?"suma":"resta"}`)+
+    (k0!=null?box("Desde el km inicial llega al",kmd(k0+sg*per),`del ${kmd(k0)}`):"")+
+    (C.fin!=null&&C.tl?box("Siguiente camión llega al",kmd(C.fin+sg*per),`sale del ${kmd(C.fin)}`):"")
     :'<p class="muted" style="margin:0">Pon ancho, espesor y volumen del camión para saber hasta qué cadenamiento llega.</p>';
   $("c-dist").textContent=C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"";
 }
@@ -484,10 +485,10 @@ $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;co
 
 /* ---------- Encabezado y calculadora ---------- */
 const HF=["fecha","recibo","ensaye","obra","ubic","capa","planta","desv","espproy","lab","jefe"];
-const CF=["km","ancho","nesp","esp","esp2","esp3","lado","calz","vcam"];
+const CF=["dir","km","ancho","nesp","esp","esp2","esp3","lado","calz","vcam"];
 function espUi(){const n=nEsp();$("w-esp2").hidden=n<3;$("w-esp3").hidden=n<2;$("l-esp1").textContent=n===1?"Espesor suelto (cm)":"Espesor izquierdo (cm)"}
 function fillForm(){
-  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");if(!J.c.nesp)J.c.nesp="1";if(!J.c.vcam)J.c.vcam="14";$("c-lado").innerHTML=ladoOpts(J.c.lado||"IZQ",false);renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
+  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");if(!J.c.nesp)J.c.nesp="1";if(!J.c.vcam)J.c.vcam="14";if(!J.c.dir)J.c.dir="1";$("c-lado").innerHTML=ladoOpts(J.c.lado||"IZQ",false);renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
   for(let i=0;i<3;i++){$("tx"+i).value=J.c.tx[i];$("tn"+i).value=J.c.tn[i]}espUi();
   const R=J.tipo==="REAL";$("m-real").setAttribute("aria-pressed",R);$("m-calc").setAttribute("aria-pressed",!R);
   $("temps-box").hidden=R;$("b-copy").hidden=!R;
@@ -500,7 +501,7 @@ const RF=["emp","res","clima","tamb","ubic","lat","lng","notas"];
 RF.forEach(k=>$("r-"+k).addEventListener(k==="emp"||k==="clima"?"change":"input",e=>{
   if(k==="emp"&&e.target.value==="__nueva__"){$("emp-new").hidden=false;$("emp-new-n").focus();e.target.value=J.reg.emp||"";return}
   J.reg[k]=e.target.value;markDirty();if(k==="lat"||k==="lng"||k==="ubic")satLink()}));
-CF.forEach(k=>$("c-"+k).addEventListener(k==="nesp"||k==="lado"?"change":"input",e=>{J.c[k]=e.target.value;markDirty();if(k==="nesp")espUi();if(k!=="km"&&k!=="vcam")renderTable();else refreshCalc()}));
+CF.forEach(k=>$("c-"+k).addEventListener(k==="nesp"||k==="lado"||k==="dir"?"change":"input",e=>{J.c[k]=e.target.value;markDirty();if(k==="nesp")espUi();if(k!=="km"&&k!=="vcam")renderTable();else refreshCalc()}));
 for(let i=0;i<3;i++){$("tx"+i).addEventListener("input",e=>{J.c.tx[i]=e.target.value;markDirty()});$("tn"+i).addEventListener("input",e=>{J.c.tn[i]=e.target.value;markDirty()})}
 $("b-rand").onclick=()=>{randTemps(false);renderTable();markDirty();toast("Temperaturas generadas")};
 function setMode(t){if(J.tipo===t)return;J.tipo=t;if(t==="CALC")randTemps(true);markDirty();fillForm()}
