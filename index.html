@@ -241,7 +241,7 @@ label.btn{display:inline-flex;align-items:center}
     <section class="panel">
       <h2>Calculadora</h2>
       <div class="grid-h">
-        <label class="f">Km inicial (ej. 3450)<input id="c-km" inputmode="numeric" style="background:var(--hi-soft)"></label>
+        <label class="f">Km inicial (24350 o 24.350)<input id="c-km" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f">Ancho (m)<input id="c-ancho" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f">Espesores por tendido<select id="c-nesp"><option value="1">1 espesor</option><option value="2">2 espesores (izq. y der.)</option><option value="3">3 espesores (izq., centro y der.)</option></select></label>
         <label class="f"><span id="l-esp1">Espesor suelto (cm)</span><input id="c-esp" inputmode="decimal" style="background:var(--hi-soft)"></label>
@@ -263,7 +263,7 @@ label.btn{display:inline-flex;align-items:center}
 
     <section class="panel">
       <h2>Viajes</h2>
-      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
+      <div class="hint" style="margin-bottom:8px"><span><i class="sw" style="background:var(--hi-soft)"></i><b>Amarillo</b>: lo capturas tú</span><span><i class="sw" style="background:var(--field)"></i><b>Gris</b>: se calcula solo</span><span><b>Del km / Al km</b>: se encadenan solos desde el km inicial; si escribes el inicio y el fin de un camión (24350 o 24.350), la longitud sale sola.</span><span>Desliza la tabla a los lados en el teléfono.</span></div>
       <div class="scroll"><table class="cap" id="tbl"></table></div>
     </section>
 
@@ -355,7 +355,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 const fmtF=s=>{if(!s)return"";const[y,m,d]=s.split("-");return d+"/"+m+"/"+y};
 function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
 
-function blankRow(){return{cam:"",vol:"",mue:"",sal:"",des:"",t:["","",""],lado:"",calz:"",ancho:"",esp:"",esp2:"",esp3:"",obs:"",lon:""}}
+function blankRow(){return{cam:"",vol:"",mue:"",sal:"",des:"",t:["","",""],kd:"",ka:"",lado:"",calz:"",ancho:"",esp:"",esp2:"",esp3:"",obs:"",lon:""}}
 function blankReg(){return{emp:"",res:"",clima:"",tamb:"",ubic:"",lat:"",lng:"",notas:""}}
 function blank(tipo){return{id:null,tipo:tipo||"REAL",reg:blankReg(),fotos:[],h:{fecha:today(),recibo:today(),ensaye:"",obra:"",ubic:"",capa:"",planta:"",desv:"",espproy:"",lab:"",jefe:""},
   c:{km:"",ancho:"3.30",esp:"",esp2:"",esp3:"",nesp:"1",lado:"IZQ",calz:"A",tx:["157","146","133"],tn:["153","141","128"]},rows:Array.from({length:NROWS},blankRow)}}
@@ -382,21 +382,29 @@ const espDef=()=>espAvg({});
 const f2=n=>n==null?"":(Math.round(n*100)/100).toString();
 
 /* ---------- Cálculo ---------- */
-function rowActive(r){return J.tipo==="REAL"?num(r.lon)>0:num(r.vol)>0}
+/* Cadenamiento: acepta 24+350, 24350 o 24.350 */
+function pkm(v){const t=String(v??"").trim();if(!t)return null;let m=t.match(/^(\d+)\s*\+\s*(\d{1,3}(?:[.,]\d+)?)$/);if(m)return +m[1]*1000+parseFloat(m[2].replace(",","."));
+  m=t.match(/^(\d{1,3})[.](\d{3})$/);if(m)return +m[1]*1000+ +m[2];const n=num(t);return n}
+const kmPair=r=>pkm(r.kd)!=null&&pkm(r.ka)!=null;
+function rowActive(r){return J.tipo==="REAL"?(num(r.lon)>0||kmPair(r)):num(r.vol)>0}
 function computed(){
-  let pos=num(J.c.km);const out=[];let tv=0,tl=0;
+  let pos=pkm(J.c.km),dir=1;const out=[];let tv=0,tl=0;
   for(const r of J.rows){
     const a=num(r.ancho)??num(J.c.ancho), e=espAvg(r);
-    const o={on:rowActive(r),a,e,vol:null,lon:null,del:null,al:null};
+    const o={on:rowActive(r),a,e,vol:null,lon:null,del:null,al:null,lonKm:false};
     if(o.on){
-      if(J.tipo==="REAL"){o.lon=num(r.lon);o.vol=(a&&e)?r2(o.lon*a*e/100):null}
+      const kd=pkm(r.kd),ka=pkm(r.ka);
+      if(J.tipo==="REAL"){o.lon=num(r.lon);if(o.lon==null&&kd!=null&&ka!=null){o.lon=Math.abs(ka-kd);o.lonKm=true}o.vol=(a&&e&&o.lon!=null)?r2(o.lon*a*e/100):null}
       else{o.vol=num(r.vol);o.lon=(a&&e)?o.vol/(a*e/100):null}
-      if(pos!=null&&o.lon!=null){o.del=pos;o.al=pos+o.lon;pos=o.al}
+      o.del=kd??pos;
+      if(ka!=null){o.al=ka;if(o.del!=null&&ka!==o.del)dir=ka>o.del?1:-1}
+      else if(o.del!=null&&o.lon!=null)o.al=o.del+dir*o.lon;
+      if(o.al!=null)pos=o.al;
       tv+=o.vol||0;tl+=o.lon||0;
     }
     out.push(o);
   }
-  return{rows:out,tv:r2(tv),tl,fin:pos};
+  const fa=out.find(o=>o.on&&o.del!=null);return{rows:out,tv:r2(tv),tl,fin:pos,ini:fa?fa.del:pkm(J.c.km)};
 }
 function randTemps(only){
   const tx=J.c.tx.map(num),tn=J.c.tn.map(num);
@@ -422,12 +430,12 @@ function renderTable(){
      `<td${y}>${inp(i,"mue",r.mue)}</td>`+
      `<td${y}>${inp(i,"sal",r.sal,'type="time"')}</td><td${y}>${inp(i,"des",r.des,'type="time"')}</td>`+
      [0,1,2].map(k=>`<td${y}>${inp(i,"t"+k,r.t[k],'inputmode="numeric"')}</td>`).join("")+
-     `<td class="calc" data-o="del">${c.on?km(c.del):""}</td><td class="calc" data-o="al">${c.on?km(c.al):""}</td>`+
+     `<td${y}>${inp(i,"kd",r.kd,`inputmode="decimal" data-ph="del" placeholder="${c.on?km(c.del):""}" style="min-width:76px"`)}</td><td${y}>${inp(i,"ka",r.ka,`inputmode="decimal" data-ph="al" placeholder="${c.on?km(c.al):""}" style="min-width:76px"`)}</td>`+
      `<td${y}>${inp(i,"lado",r.lado,`placeholder="${esc(J.c.lado)}"`)}</td><td${y}>${inp(i,"calz",r.calz,`placeholder="${esc(J.c.calz)}"`)}</td>`+
      `<td${y}>${inp(i,"ancho",r.ancho,`inputmode="decimal" placeholder="${esc(J.c.ancho)}"`)}</td>`+
      `<td${y}><div class="esps">${EKEYS().map(k=>`<label>${nEsp()>1?`<small>${ELAB[k]}</small>`:""}${inp(i,k,r[k],`inputmode="decimal" placeholder="${esc(J.c[k])}"`)}</label>`).join("")}${nEsp()>1?`<span class="eavg" data-o="eavg">${c.e!=null?"prom. "+f2(c.e):""}</span>`:""}</div></td>`+
      `<td${y}>${inp(i,"obs",r.obs,'style="min-width:120px"')}</td>`+
-     (R?`<td${y}>${inp(i,"lon",r.lon,'inputmode="decimal"')}</td>`:`<td class="calc" data-o="lon">${c.lon!=null?c.lon.toFixed(1):""}</td>`)+
+     (R?`<td${y}>${inp(i,"lon",r.lon,`inputmode="decimal" data-ph="lon" placeholder="${c.lonKm?c.lon.toFixed(1):""}"`)}</td>`:`<td class="calc" data-o="lon">${c.lon!=null?c.lon.toFixed(1):""}</td>`)+
      "</tr>";
   });
   h+=`</tbody><tfoot><tr><td>Total</td><td data-o="tv">${C.tv||""}</td><td colspan="12"></td><td data-o="tl">${C.tl?C.tl.toFixed(1):""}</td></tr></tfoot>`;
@@ -439,13 +447,14 @@ function refreshCalc(){
   C.rows.forEach((c,i)=>{const tr=trs[i];
     const set=(o,v)=>{const td=tr.querySelector(`[data-o="${o}"]`);if(td)td.textContent=v};
     if(R)set("vol",c.vol??"");else set("lon",c.lon!=null?c.lon.toFixed(1):"");
-    set("del",c.on?km(c.del):"");set("al",c.on?km(c.al):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
+    const ph=(o,v)=>{const q=tr.querySelector(`[data-ph="${o}"]`);if(q)q.placeholder=v};
+    ph("del",c.on?km(c.del):"");ph("al",c.on?km(c.al):"");ph("lon",c.lonKm?c.lon.toFixed(1):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
   });
   const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
   const a=num(J.c.ancho),e=espDef();
   const per=(a&&e)?(14/(a*e/100)):null;
   $("c-dist").textContent=(per?`Un camión de 14 m³ cubre ${per.toFixed(1)} m con ${a} m de ancho y ${f2(e)} cm${nEsp()>1?" (promedio)":""}. `:"Pon ancho y espesor para calcular la distancia por camión. ")+
-    (C.fin!=null&&C.tl?`Tramo de hoy: ${km(num(J.c.km))} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"");
+    (C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"");
 }
 $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;const r=J.rows[+t.dataset.i],k=t.dataset.k;
   if(k[0]==="t"&&k.length===2)r.t[+k[1]]=t.value;else r[k]=t.value;
@@ -505,7 +514,7 @@ async function initStore(){
 async function saveJ(){
   if(pendingUp){toast("Espera a que terminen de subir las fotos");return}
   const doc={tipo:J.tipo,h:J.h,c:J.c,rows:J.rows,reg:J.reg,fotos:J.fotos.filter(f=>f.id).map(f=>({id:f.id,cap:f.cap||"",...(f.ubic?{ubic:true}:{}),...(f.mapa?{mapa:true}:{}),...(f.file?{file:f.file}:{})})),upd:Date.now()};
-  const C=computed();doc.resumen={viajes:C.rows.filter(r=>r.on).length,vol:C.tv,del:km(num(J.c.km)),al:km(C.fin),fotos:doc.fotos.length,emp:J.reg.emp||""};
+  const C=computed();doc.resumen={viajes:C.rows.filter(r=>r.on).length,vol:C.tv,del:km(C.ini),al:km(C.fin),fotos:doc.fotos.length,emp:J.reg.emp||""};
   try{
     if(local){if(!J.id)J.id="L"+Date.now();const prev=HIS.find(x=>x.id===J.id);HIS=HIS.filter(x=>x.id!==J.id).concat([{...doc,id:J.id,...(prev&&prev._sha?{_sha:prev._sha}:{})}]);LS.set("tj_his",HIS);renderHis()}
     else if(J.id)await colJ.doc(J.id).set(doc);
@@ -700,7 +709,7 @@ async function satImage(lat,lng){
   await Promise.all(jobs);
   const cx=SAT_W/2,cy=SAT_H/2;g.save();g.shadowColor="rgba(0,0,0,.5)";g.shadowBlur=8;g.fillStyle="#e53935";g.beginPath();g.arc(cx,cy-34,20,Math.PI,0);g.lineTo(cx,cy);g.closePath();g.fill();g.restore();g.fillStyle="#fff";g.beginPath();g.arc(cx,cy-34,8,0,Math.PI*2);g.fill();
   const mpp=156543.03392*Math.cos(r)/Math.pow(2,SAT_Z),sl=100/mpp;g.fillStyle="rgba(0,0,0,.55)";g.fillRect(SAT_W-sl-44,SAT_H-74,sl+30,30);g.fillStyle="#fff";g.fillRect(SAT_W-sl-30,SAT_H-52,sl,5);g.font="600 16px system-ui,sans-serif";g.fillText("100 m",SAT_W-sl-30,SAT_H-58);
-  const C=computed();const t1=`${lat.toFixed(6)}, ${lng.toFixed(6)}`,t2=[C.fin!=null&&C.tl?`Km ${km(num(J.c.km))} – ${km(C.fin)}`:J.c.km?`Km ${km(num(J.c.km))}`:"",J.c.calz?"Cuerpo "+J.c.calz:"",fmtF(J.h.fecha)].filter(Boolean).join("  ·  ");
+  const C=computed();const t1=`${lat.toFixed(6)}, ${lng.toFixed(6)}`,t2=[C.fin!=null&&C.tl?`Km ${km(C.ini)} – ${km(C.fin)}`:J.c.km?`Km ${km(pkm(J.c.km))}`:"",J.c.calz?"Cuerpo "+J.c.calz:"",fmtF(J.h.fecha)].filter(Boolean).join("  ·  ");
   g.font="600 22px system-ui,sans-serif";const w1=g.measureText(t1).width;g.font="500 18px system-ui,sans-serif";const tw=Math.max(w1,g.measureText(t2).width);
   g.fillStyle="rgba(0,0,0,.6)";g.fillRect(14,14,tw+28,70);g.fillStyle="#fff";g.font="600 22px system-ui,sans-serif";g.fillText(t1,28,44);g.fillStyle="#f2b705";g.font="500 18px system-ui,sans-serif";g.fillText(t2,28,72);
   g.font="13px system-ui,sans-serif";const at="Imagen: Esri, Maxar, Earthstar Geographics",aw=g.measureText(at).width;g.fillStyle="rgba(255,255,255,.75)";g.fillRect(SAT_W-aw-14,SAT_H-22,aw+14,22);g.fillStyle="#222";g.fillText(at,SAT_W-aw-7,SAT_H-7);
@@ -711,7 +720,7 @@ async function addSatMap(){
   const b=$("b-autosat");b.disabled=true;b.textContent="Descargando mapa…";
   try{const blob=await satImage(la,lo);const file=new File([blob],`mapa_${la.toFixed(5)}_${lo.toFixed(5)}.jpg`,{type:"image/jpeg"});
     const old=J.fotos.findIndex(f=>f.mapa);if(old>=0){const f=J.fotos.splice(old,1)[0];if(f.id&&!f.saved)assets.delete(f.id).catch(()=>{})}
-    const rec={cap:"Mapa satelital"+(J.c.km?" km "+km(num(J.c.km)):"")+(J.reg.ubic?" · "+J.reg.ubic:""),ubic:true,mapa:true,prev:URL.createObjectURL(blob)};
+    const rec={cap:"Mapa satelital"+(J.c.km?" km "+km(pkm(J.c.km)):"")+(J.reg.ubic?" · "+J.reg.ubic:""),ubic:true,mapa:true,prev:URL.createObjectURL(blob)};
     J.fotos.unshift(rec);renderPhotos();pendingUp++;markDirty();
     try{const r=await assets.upload(file);rec.id=r.id}catch(e){rec.err="No se guardó"}pendingUp--;J.fotos=J.fotos.filter(f=>f.id);renderPhotos();
     $("sat-hint").textContent="Mapa satelital agregado. Sale en el PDF junto a las coordenadas."}
@@ -731,7 +740,7 @@ async function addFiles(files,ubic){
   if(!assets){toast("No se pueden guardar fotos en este navegador.");return}
   for(const file of files){
     if(!J.reg.lat){const g=await exifGps(file);if(g)setCoords(g,`Coordenadas tomadas de la foto ${file.name}.`)}
-    const rec={cap:ubic?"Vista satelital"+(J.c.km?" km "+km(num(J.c.km)):""):"",...(ubic?{ubic:true}:{}),prev:URL.createObjectURL(file)};
+    const rec={cap:ubic?"Vista satelital"+(J.c.km?" km "+km(pkm(J.c.km)):""):"",...(ubic?{ubic:true}:{}),prev:URL.createObjectURL(file)};
     J.fotos.push(rec);renderPhotos();pendingUp++;markDirty();
     try{if(file.size>20*1024*1024)throw{code:"too_large"};const r=await assets.upload(file);rec.id=r.id}
     catch(err){rec.err=err&&err.code==="too_large"?"Pesa más de 20 MB":"No se subió"}
@@ -785,7 +794,7 @@ async function regPages(pdf){
   head();
   const C=computed();
   kv("Obra:",J.h.obra);kv("Empresa que ejecuta:",r.emp);kv("Residente / encargado:",r.res);
-  kv("Tramo de hoy:",C.fin!=null&&C.tl?`${km(num(J.c.km))} al ${km(C.fin)} · ${C.tl.toFixed(1)} m · ${C.tv} m3 · lado ${J.c.lado||""} · cuerpo ${J.c.calz||""}`:"");
+  kv("Tramo de hoy:",C.fin!=null&&C.tl?`${km(C.ini)} al ${km(C.fin)} · ${C.tl.toFixed(1)} m · ${C.tv} m3 · lado ${J.c.lado||""} · cuerpo ${J.c.calz||""}`:"");
   kv("Clima:",[r.clima,r.tamb?r.tamb+" °C ambiente":""].filter(Boolean).join(" · "));
   kv("Ubicación:",r.ubic);
   if(r.lat&&r.lng){need(6);pdf.setFont("helvetica","normal");pdf.setFontSize(9.5);pdf.setTextColor(107,101,96);pdf.text("Coordenadas:",M,y);pdf.setTextColor(30,90,160);pdf.textWithLink(`${r.lat}, ${r.lng} (ver en mapa)`,M+46,y,{url:`https://maps.google.com/?q=${r.lat},${r.lng}`});pdf.setTextColor(29,27,26);y+=5.2}
