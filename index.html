@@ -123,6 +123,11 @@ textarea{font:400 1rem var(--f-body);color:var(--ink);background:var(--field);bo
 .ph input{font:400 .9rem var(--f-body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0;width:100%}
 .file{display:none}
 label.btn{display:inline-flex;align-items:center}
+.esps{display:flex;flex-direction:column;gap:2px;padding:2px 0;min-width:84px}
+.esps label{display:flex;align-items:center;gap:2px;padding-left:4px}
+.esps small{font:600 10px var(--f-body);color:var(--muted);text-transform:uppercase;min-width:34px;text-align:left}
+.esps input{padding:4px 2px!important}
+.eavg{font:600 11px var(--f-mono);color:var(--ink);border-top:1px solid var(--line);padding-top:2px}
 .coord{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .span2{grid-column:span 2}
 @media (max-width:420px){.span2{grid-column:auto}}
@@ -238,7 +243,10 @@ label.btn{display:inline-flex;align-items:center}
       <div class="grid-h">
         <label class="f">Km inicial (ej. 3450)<input id="c-km" inputmode="numeric" style="background:var(--hi-soft)"></label>
         <label class="f">Ancho (m)<input id="c-ancho" inputmode="decimal" style="background:var(--hi-soft)"></label>
-        <label class="f">Espesor antes de compactar (cm)<input id="c-esp" inputmode="decimal" style="background:var(--hi-soft)"></label>
+        <label class="f">Espesores por tendido<select id="c-nesp"><option value="1">1 espesor</option><option value="2">2 espesores (izq. y der.)</option><option value="3">3 espesores (izq., centro y der.)</option></select></label>
+        <label class="f"><span id="l-esp1">Espesor suelto (cm)</span><input id="c-esp" inputmode="decimal" style="background:var(--hi-soft)"></label>
+        <label class="f" id="w-esp2" hidden><span id="l-esp2">Espesor centro (cm)</span><input id="c-esp2" inputmode="decimal" style="background:var(--hi-soft)"></label>
+        <label class="f" id="w-esp3" hidden>Espesor derecho (cm)<input id="c-esp3" inputmode="decimal" style="background:var(--hi-soft)"></label>
         <label class="f">Lado o franja<input id="c-lado" style="background:var(--hi-soft)"></label>
         <label class="f">Calzada o cuerpo<input id="c-calz" style="background:var(--hi-soft)"></label>
       </div>
@@ -347,10 +355,10 @@ const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth
 const fmtF=s=>{if(!s)return"";const[y,m,d]=s.split("-");return d+"/"+m+"/"+y};
 function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2600)}
 
-function blankRow(){return{cam:"",vol:"",mue:"",sal:"",des:"",t:["","",""],lado:"",calz:"",ancho:"",esp:"",obs:"",lon:""}}
+function blankRow(){return{cam:"",vol:"",mue:"",sal:"",des:"",t:["","",""],lado:"",calz:"",ancho:"",esp:"",esp2:"",esp3:"",obs:"",lon:""}}
 function blankReg(){return{emp:"",res:"",clima:"",tamb:"",ubic:"",lat:"",lng:"",notas:""}}
 function blank(tipo){return{id:null,tipo:tipo||"REAL",reg:blankReg(),fotos:[],h:{fecha:today(),recibo:today(),ensaye:"",obra:"",ubic:"",capa:"",planta:"",desv:"",espproy:"",lab:"",jefe:""},
-  c:{km:"",ancho:"3.30",esp:"",lado:"IZQ",calz:"A",tx:["157","146","133"],tn:["153","141","128"]},rows:Array.from({length:NROWS},blankRow)}}
+  c:{km:"",ancho:"3.30",esp:"",esp2:"",esp3:"",nesp:"1",lado:"IZQ",calz:"A",tx:["157","146","133"],tn:["153","141","128"]},rows:Array.from({length:NROWS},blankRow)}}
 let J=blank("REAL"), dirty=false;
 let CAMS=[], HIS=[], EMPS=[], assets=null, pendingUp=0;
 const IN_CLAUDE=!!window.claude;
@@ -364,12 +372,21 @@ const localAssets={async upload(file){const id="p"+Date.now().toString(36)+Math.
 async function hydratePhotos(){try{for(const k of await idb.keys()){if(!URLS.has(k)){const b=await idb.get(k);if(b)URLS.set(k,URL.createObjectURL(b))}}}catch(e){}}
 const blobSrc=id=>URLS.get(id)||"/_blob/"+id;
 
+/* ---------- Espesores: 1, 2 (izq/der) o 3 (izq/centro/der); se usa el promedio ---------- */
+const nEsp=()=>Math.min(3,Math.max(1,parseInt(J.c.nesp)||1));
+const EKEYS=()=>nEsp()===1?["esp"]:nEsp()===2?["esp","esp3"]:["esp","esp2","esp3"];
+const ELAB={esp:"Izq",esp2:"Centro",esp3:"Der"};
+function espVals(r){return EKEYS().map(k=>num(r[k])??num(J.c[k]))}
+function espAvg(r){const v=espVals(r);if(v.some(x=>x==null))return null;return v.reduce((a,b)=>a+b,0)/v.length}
+const espDef=()=>espAvg({});
+const f2=n=>n==null?"":(Math.round(n*100)/100).toString();
+
 /* ---------- Cálculo ---------- */
 function rowActive(r){return J.tipo==="REAL"?num(r.lon)>0:num(r.vol)>0}
 function computed(){
   let pos=num(J.c.km);const out=[];let tv=0,tl=0;
   for(const r of J.rows){
-    const a=num(r.ancho)??num(J.c.ancho), e=num(r.esp)??num(J.c.esp);
+    const a=num(r.ancho)??num(J.c.ancho), e=espAvg(r);
     const o={on:rowActive(r),a,e,vol:null,lon:null,del:null,al:null};
     if(o.on){
       if(J.tipo==="REAL"){o.lon=num(r.lon);o.vol=(a&&e)?r2(o.lon*a*e/100):null}
@@ -391,7 +408,7 @@ function randTemps(only){
 }
 
 /* ---------- Tabla de captura ---------- */
-const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th><th rowspan="2" style="background:var(--hi-soft)">Longitud (m)</th></tr>
+const HEAD=`<thead><tr><th colspan="2">Viajes</th><th rowspan="2">No. de muestra</th><th colspan="2">Horas</th><th colspan="3">Temperaturas de la mezcla (°C)</th><th colspan="5">Tendido</th><th rowspan="2" id="th-esp">Espesor antes de compactar (cm)</th><th rowspan="2">Observaciones</th><th rowspan="2" style="background:var(--accent);color:var(--accent-ink)">Longitud (m)</th></tr>
 <tr><th>Camión</th><th>Vol. (m³)</th><th>Salida planta</th><th>Descarga tramo</th><th>Al salir de planta</th><th>Al tender</th><th>Al compactar</th><th>Del km</th><th>Al km</th><th>Lado o franja</th><th>Calzada o cuerpo</th><th>Ancho (m)</th></tr></thead>`;
 function inp(i,k,val,attrs){return`<input data-i="${i}" data-k="${k}" value="${esc(val)}" ${attrs||""}>`}
 function renderTable(){
@@ -408,7 +425,7 @@ function renderTable(){
      `<td class="calc" data-o="del">${c.on?km(c.del):""}</td><td class="calc" data-o="al">${c.on?km(c.al):""}</td>`+
      `<td${y}>${inp(i,"lado",r.lado,`placeholder="${esc(J.c.lado)}"`)}</td><td${y}>${inp(i,"calz",r.calz,`placeholder="${esc(J.c.calz)}"`)}</td>`+
      `<td${y}>${inp(i,"ancho",r.ancho,`inputmode="decimal" placeholder="${esc(J.c.ancho)}"`)}</td>`+
-     `<td${y}>${inp(i,"esp",r.esp,`inputmode="decimal" placeholder="${esc(J.c.esp)}"`)}</td>`+
+     `<td${y}><div class="esps">${EKEYS().map(k=>`<label>${nEsp()>1?`<small>${ELAB[k]}</small>`:""}${inp(i,k,r[k],`inputmode="decimal" placeholder="${esc(J.c[k])}"`)}</label>`).join("")}${nEsp()>1?`<span class="eavg" data-o="eavg">${c.e!=null?"prom. "+f2(c.e):""}</span>`:""}</div></td>`+
      `<td${y}>${inp(i,"obs",r.obs,'style="min-width:120px"')}</td>`+
      (R?`<td${y}>${inp(i,"lon",r.lon,'inputmode="decimal"')}</td>`:`<td class="calc" data-o="lon">${c.lon!=null?c.lon.toFixed(1):""}</td>`)+
      "</tr>";
@@ -422,12 +439,12 @@ function refreshCalc(){
   C.rows.forEach((c,i)=>{const tr=trs[i];
     const set=(o,v)=>{const td=tr.querySelector(`[data-o="${o}"]`);if(td)td.textContent=v};
     if(R)set("vol",c.vol??"");else set("lon",c.lon!=null?c.lon.toFixed(1):"");
-    set("del",c.on?km(c.del):"");set("al",c.on?km(c.al):"");
+    set("del",c.on?km(c.del):"");set("al",c.on?km(c.al):"");set("eavg",c.e!=null?"prom. "+f2(c.e):"");
   });
   const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
-  const a=num(J.c.ancho),e=num(J.c.esp);
+  const a=num(J.c.ancho),e=espDef();
   const per=(a&&e)?(14/(a*e/100)):null;
-  $("c-dist").textContent=(per?`Un camión de 14 m³ cubre ${per.toFixed(1)} m con ${a} m de ancho y ${e} cm. `:"Pon ancho y espesor para calcular la distancia por camión. ")+
+  $("c-dist").textContent=(per?`Un camión de 14 m³ cubre ${per.toFixed(1)} m con ${a} m de ancho y ${f2(e)} cm${nEsp()>1?" (promedio)":""}. `:"Pon ancho y espesor para calcular la distancia por camión. ")+
     (C.fin!=null&&C.tl?`Tramo de hoy: ${km(num(J.c.km))} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"");
 }
 $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;const r=J.rows[+t.dataset.i],k=t.dataset.k;
@@ -438,10 +455,11 @@ $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;co
 
 /* ---------- Encabezado y calculadora ---------- */
 const HF=["fecha","recibo","ensaye","obra","ubic","capa","planta","desv","espproy","lab","jefe"];
-const CF=["km","ancho","esp","lado","calz"];
+const CF=["km","ancho","nesp","esp","esp2","esp3","lado","calz"];
+function espUi(){const n=nEsp();$("w-esp2").hidden=n<3;$("w-esp3").hidden=n<2;$("l-esp1").textContent=n===1?"Espesor suelto (cm)":"Espesor izquierdo (cm)"}
 function fillForm(){
-  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
-  for(let i=0;i<3;i++){$("tx"+i).value=J.c.tx[i];$("tn"+i).value=J.c.tn[i]}
+  HF.forEach(k=>$("h-"+k).value=J.h[k]??"");if(!J.c.nesp)J.c.nesp="1";renderEmpSel();RF.forEach(k=>$("r-"+k).value=J.reg[k]??"");renderPhotos();satLink();CF.forEach(k=>$("c-"+k).value=J.c[k]??"");
+  for(let i=0;i<3;i++){$("tx"+i).value=J.c.tx[i];$("tn"+i).value=J.c.tn[i]}espUi();
   const R=J.tipo==="REAL";$("m-real").setAttribute("aria-pressed",R);$("m-calc").setAttribute("aria-pressed",!R);
   $("temps-box").hidden=R;$("b-copy").hidden=!R;
   $("modo-txt").textContent=R?"REAL: lo que tomas en campo. Capturas la longitud de cada camión y el volumen sale solo (longitud × ancho × espesor). Los cadenamientos se encadenan desde el km inicial.":"CALCULADO: capturas el volumen de cada camión; la longitud y los cadenamientos salen solos y las temperaturas se generan al azar entre la mínima y la máxima.";
@@ -453,7 +471,7 @@ const RF=["emp","res","clima","tamb","ubic","lat","lng","notas"];
 RF.forEach(k=>$("r-"+k).addEventListener(k==="emp"||k==="clima"?"change":"input",e=>{
   if(k==="emp"&&e.target.value==="__nueva__"){$("emp-new").hidden=false;$("emp-new-n").focus();e.target.value=J.reg.emp||"";return}
   J.reg[k]=e.target.value;markDirty();if(k==="lat"||k==="lng"||k==="ubic")satLink()}));
-CF.forEach(k=>$("c-"+k).addEventListener("input",e=>{J.c[k]=e.target.value;markDirty();if(k==="lado"||k==="calz"||k==="ancho"||k==="esp")renderTable();else refreshCalc()}));
+CF.forEach(k=>$("c-"+k).addEventListener(k==="nesp"?"change":"input",e=>{J.c[k]=e.target.value;markDirty();if(k==="nesp")espUi();if(k!=="km")renderTable();else refreshCalc()}));
 for(let i=0;i<3;i++){$("tx"+i).addEventListener("input",e=>{J.c.tx[i]=e.target.value;markDirty()});$("tn"+i).addEventListener("input",e=>{J.c.tn[i]=e.target.value;markDirty()})}
 $("b-rand").onclick=()=>{randTemps(false);renderTable();markDirty();toast("Temperaturas generadas")};
 function setMode(t){if(J.tipo===t)return;J.tipo=t;if(t==="CALC")randTemps(true);markDirty();fillForm()}
@@ -729,17 +747,18 @@ async function loadPhoto(id){let b=URLS.has(id)?await idb.get(id):null;if(!b){co
   return{data:c.toDataURL("image/jpeg",0.85),w:c.width,h:c.height}}
 
 /* ---------- Hoja de impresión ---------- */
+function espTxt(){if(nEsp()===1)return J.c.esp||"";return EKEYS().map(k=>ELAB[k].toUpperCase()+" "+(J.c[k]||"—")).join(" · ")+(espDef()!=null?" · PROM. "+f2(espDef()):"")}
 function buildSheet(){
   const C=computed(),h=J.h;
   let rows="";J.rows.forEach((r,i)=>{const c=C.rows[i];const on=c.on;
-    rows+=`<tr><td>${esc(r.cam)}</td><td>${on&&c.vol!=null?c.vol:""}</td><td>${esc(r.mue)}</td><td>${esc(r.sal)}</td><td>${esc(r.des)}</td><td>${esc(r.t[0])}</td><td>${esc(r.t[1])}</td><td>${esc(r.t[2])}</td><td>${on?km(c.del):""}</td><td>${on?km(c.al):""}</td><td>${on?esc(r.lado||J.c.lado):""}</td><td>${on?esc(r.calz||J.c.calz):""}</td><td>${on&&c.a?c.a.toFixed(2):""}</td><td>${on&&c.e?c.e.toFixed(1):""}</td>${i===0?`<td rowspan="${NROWS}" style="vertical-align:top;text-align:left;padding:4px">${J.rows.filter(x=>x.obs).map(x=>esc(x.cam?x.cam+": ":"")+esc(x.obs)).join("<br>")}</td>`:""}</tr>`});
+    rows+=`<tr><td>${esc(r.cam)}</td><td>${on&&c.vol!=null?c.vol:""}</td><td>${esc(r.mue)}</td><td>${esc(r.sal)}</td><td>${esc(r.des)}</td><td>${esc(r.t[0])}</td><td>${esc(r.t[1])}</td><td>${esc(r.t[2])}</td><td>${on?km(c.del):""}</td><td>${on?km(c.al):""}</td><td>${on?esc(r.lado||J.c.lado):""}</td><td>${on?esc(r.calz||J.c.calz):""}</td><td>${on&&c.a?c.a.toFixed(2):""}</td><td>${on&&c.e!=null?(nEsp()>1?`<span style="font-size:8.5px">${espVals(r).map(v=>v==null?"":f2(v)).join(" / ")}</span><br><b>${f2(c.e)}</b>`:f2(c.e)):""}</td>${i===0?`<td rowspan="${NROWS}" style="vertical-align:top;text-align:left;padding:4px">${J.rows.filter(x=>x.obs).map(x=>esc(x.cam?x.cam+": ":"")+esc(x.obs)).join("<br>")}</td>`:""}</tr>`});
   $("sheet").innerHTML=`<div class="hd"><div><h3>JUVISA INGENIERIA, S.A. DE C.V.</h3><h4>INFORME DE TENDIDO Y CONTROL DE TEMPERATURA DE MEZCLA ASFALTICA ELABORADA EN CALIENTE</h4></div><img src="${LOGO}" style="width:190px;justify-self:end"></div>
   <div class="box kv"><div>OBRA:</div><div class="v">${esc(h.obra)}</div><div style="text-align:right">ENSAYES No.</div><div class="v">${esc(h.ensaye)}</div>
   <div></div><div></div><div style="text-align:right">FECHA DE RECIBO:</div><div class="v">${fmtF(h.recibo)}</div>
   <div>UBICACIÓN:</div><div class="v">${esc(h.ubic)}</div><div style="text-align:right">FECHA DE INFORME:</div><div class="v">${fmtF(h.fecha)}</div></div>
   <div class="box kv" style="grid-template-columns:90px 1fr 90px 1fr 260px 80px"><div>CAPA</div><div class="v">${esc(h.capa)}</div><div></div><div></div><div style="text-align:right">ESPESOR DE PROYECTO DE LA CAPA (CM):</div><div class="v">${esc(h.espproy)}</div>
-  <div>PLANTA EN :</div><div class="v">${esc(h.planta)}</div><div>DESVIACIÓN</div><div class="v">${esc(h.desv)}</div><div style="text-align:right">ESPESOR ANTES DE COMPACTAR (CM):</div><div class="v">${esc(J.c.esp)}</div></div>
-  <table class="grid" style="margin-top:8px"><thead><tr><th colspan="2">VIAJES</th><th rowspan="2" style="width:52px">No. DE MUESTRA</th><th colspan="2">HORAS</th><th colspan="3">TEMPERATURAS DE LA MEZCLA, (°C)</th><th colspan="5">TENDIDO</th><th rowspan="2" style="width:80px">ESPESOR DE CAPA TENDIDA (ANTES DE COMPACTAR) (cm)</th><th rowspan="2" style="width:150px">OBSERVACIONES</th></tr>
+  <div>PLANTA EN :</div><div class="v">${esc(h.planta)}</div><div>DESVIACIÓN</div><div class="v">${esc(h.desv)}</div><div style="text-align:right">ESPESOR ANTES DE COMPACTAR (CM):</div><div class="v">${esc(espTxt())}</div></div>
+  <table class="grid" style="margin-top:8px"><thead><tr><th colspan="2">VIAJES</th><th rowspan="2" style="width:52px">No. DE MUESTRA</th><th colspan="2">HORAS</th><th colspan="3">TEMPERATURAS DE LA MEZCLA, (°C)</th><th colspan="5">TENDIDO</th><th rowspan="2" style="width:80px">ESPESOR DE CAPA TENDIDA (ANTES DE COMPACTAR) (cm)${nEsp()>1?`<br>${EKEYS().map(k=>ELAB[k].toUpperCase()).join(" / ")} · PROM.`:""}</th><th rowspan="2" style="width:150px">OBSERVACIONES</th></tr>
   <tr><th style="width:80px">CAMION</th><th style="width:40px">VOL. (m³)</th><th>SALIDA PLANTA</th><th>DESCARGA TRAMO</th><th>AL SALIR DE LA PLANTA</th><th>AL TENDER</th><th>AL COMPACTAR</th><th>DEL KM.</th><th>AL KM.</th><th>LADO O FRANJA</th><th>CALZADA O CUERPO</th><th>ANCHO (m)</th></tr></thead>
   <tbody>${rows}<tr><td></td><td style="font-weight:700">${C.tv||""}</td><td colspan="13"></td></tr></tbody></table>
   <div class="firmas"><div>LABORATORISTA<br><br><br>${esc(h.lab)}</div><div>JEFE DE CONTROL DE CALIDAD<br><br><br>${esc(h.jefe)}</div></div>`;
@@ -808,10 +827,10 @@ async function doXLS(){
     const aoa=[["JUVISA INGENIERIA, S.A. DE C.V."],["INFORME DE TENDIDO Y CONTROL DE TEMPERATURA DE MEZCLA ASFALTICA ELABORADA EN CALIENTE"],[],
       ["OBRA:",h.obra,"","","","","","","","","","ENSAYES No.",h.ensaye],["UBICACIÓN:",h.ubic,"","","","","","","","","","FECHA DE RECIBO:",fmtF(h.recibo)],
       ["CAPA",h.capa,"","","","","","","","","","FECHA DE INFORME:",fmtF(h.fecha)],["PLANTA EN :",h.planta,"","DESVIACIÓN",h.desv,"","","","","","","ESPESOR DE PROYECTO (CM):",h.espproy],
-      ["","","","","","","","","","","","ESPESOR ANTES DE COMPACTAR (CM):",J.c.esp],[],
-      ["CAMION","VOL. (m³)","No. DE MUESTRA","SALIDA PLANTA","DESCARGA TRAMO","AL SALIR DE LA PLANTA","AL TENDER","AL COMPACTAR","DEL KM.","AL KM.","LADO O FRANJA","CALZADA O CUERPO","ANCHO (m)","ESPESOR (cm)","OBSERVACIONES","LONGITUD (m)"]];
+      ["","","","","","","","","","","","ESPESOR ANTES DE COMPACTAR (CM):",espTxt()],[],
+      ["CAMION","VOL. (m³)","No. DE MUESTRA","SALIDA PLANTA","DESCARGA TRAMO","AL SALIR DE LA PLANTA","AL TENDER","AL COMPACTAR","DEL KM.","AL KM.","LADO O FRANJA","CALZADA O CUERPO","ANCHO (m)",...(nEsp()>1?EKEYS().map(k=>"ESP. "+ELAB[k].toUpperCase()+" (cm)"):[]),nEsp()>1?"ESPESOR PROMEDIO (cm)":"ESPESOR (cm)","OBSERVACIONES","LONGITUD (m)"]];
     J.rows.forEach((r,i)=>{const c=C.rows[i];if(!c.on&&!r.cam)return;
-      aoa.push([r.cam,c.vol,r.mue,r.sal,r.des,num(r.t[0]),num(r.t[1]),num(r.t[2]),c.on?km(c.del):"",c.on?km(c.al):"",r.lado||J.c.lado,r.calz||J.c.calz,c.a,c.e,r.obs,c.lon!=null?r2(c.lon):null])});
+      aoa.push([r.cam,c.vol,r.mue,r.sal,r.des,num(r.t[0]),num(r.t[1]),num(r.t[2]),c.on?km(c.del):"",c.on?km(c.al):"",r.lado||J.c.lado,r.calz||J.c.calz,c.a,...(nEsp()>1?espVals(r):[]),c.e!=null?r2(c.e):null,r.obs,c.lon!=null?r2(c.lon):null])});
     aoa.push(["TOTAL",C.tv]);aoa.push([]);aoa.push(["LABORATORISTA",h.lab,"","","","","","","JEFE DE CONTROL DE CALIDAD",h.jefe]);
     const ws=XLSX.utils.aoa_to_sheet(aoa);ws["!cols"]=[12,9,10,9,9,10,9,10,9,9,9,9,8,9,22,11].map(w=>({wch:w}));
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,J.tipo==="REAL"?"REAL":"CALCULADO");
