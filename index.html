@@ -160,7 +160,7 @@ table.cap select{appearance:auto}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v11</span> <span id="sync-top"></span></span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v12</span> <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
@@ -270,6 +270,7 @@ table.cap select{appearance:auto}
         <div class="actions" style="margin-top:10px"><button class="btn hi" id="b-rand">Generar temperaturas</button></div>
       </div>
       <div class="res" id="c-res"></div>
+      <div class="res" id="c-cur"></div>
       <p class="muted" id="c-dist" style="margin:10px 0 0"></p>
     </section>
 
@@ -476,8 +477,16 @@ function refreshCalc(){
   $("c-res").innerHTML=per?box(`Longitud con ${f2(vc)} m³`,per.toFixed(1)+" m",`${f2(a)} m de ancho · ${f2(e)} cm${nEsp()>1?" (promedio)":""} · ${sg>0?"suma":"resta"}`)+
     (k0!=null?box("Desde el km inicial llega al",kmd(k0+sg*per),`del ${kmd(k0)}`):"")
     :'<p class="muted" style="margin:0">Pon ancho, espesor y volumen del camión para saber hasta qué cadenamiento llega.</p>';
-  $("c-dist").textContent=C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"";
+  let ci=CUR_ROW!=null&&C.rows[CUR_ROW]&&C.rows[CUR_ROW].on?CUR_ROW:-1;if(ci<0)for(let i=C.rows.length-1;i>=0;i--)if(C.rows[i].on){ci=i;break}
+  const nv=C.rows.filter(r=>r.on).length;
+  if(ci>=0){const c=C.rows[ci],r=J.rows[ci];
+    $("c-cur").innerHTML=box(`Camión ${r.cam?esc(r.cam):"viaje "+(ci+1)}`,c.vol!=null?f2(c.vol)+" m³":"—",[c.lon!=null?c.lon.toFixed(1)+" m":"",c.del!=null&&c.al!=null?`${km(c.del)} al ${km(c.al)}`:""].filter(Boolean).join(" · "))+
+      box(`Acumulado (${nv} viaje${nv===1?"":"s"})`,f2(C.tv)+" m³",C.fin!=null&&C.tl?`${km(C.ini)} al ${km(C.fin)} · ${C.tl.toFixed(1)} m`:"")}
+  else $("c-cur").innerHTML="";
+  $("c-dist").textContent="";
 }
+let CUR_ROW=null;
+$("tbl").addEventListener("focusin",e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!=null&&+i!==CUR_ROW){CUR_ROW=+i;refreshCalc()}});
 $("tbl").addEventListener("input",e=>{const t=e.target;if(!t.dataset.k)return;const r=J.rows[+t.dataset.i],k=t.dataset.k;
   if(k[0]==="t"&&k.length===2)r.t[+k[1]]=t.value;else r[k]=t.value;
   if(J.tipo==="REAL"&&t.value.trim()&&(k==="lon"||k==="ka")){const o=k==="lon"?"ka":"lon";r[o]="";const q=t.closest("tr").querySelector(`[data-k="${o}"]`);if(q)q.value=""}
