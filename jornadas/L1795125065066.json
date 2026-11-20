@@ -1,0 +1,354 @@
+{
+ "tipo": "REAL",
+ "h": {
+  "fecha": "2026-11-19",
+  "recibo": "2026-11-19",
+  "ensaye": "",
+  "obra": "Ampliación Armería - Manzanillo",
+  "ubic": "Puente Tepalcates I",
+  "capa": "Base Asfaltica",
+  "planta": "El Colomo GCI",
+  "desv": "",
+  "espproy": "",
+  "lab": "Ing. César Ezequiel Tafoya Garibay",
+  "jefe": "Ing. Julio César Rojas Miranda"
+ },
+ "c": {
+  "km": "80690",
+  "ancho": "3.50",
+  "esp": "12",
+  "esp2": "",
+  "esp3": "",
+  "nesp": "1",
+  "lado": "CENTRAL",
+  "calz": "B",
+  "tx": [
+   "157",
+   "146",
+   "133"
+  ],
+  "tn": [
+   "153",
+   "141",
+   "128"
+  ],
+  "vcam": "14"
+ },
+ "rows": [
+  {
+   "cam": "HB-6256-B",
+   "vol": "",
+   "mue": "10",
+   "sal": "13:23",
+   "des": "15:15",
+   "t": [
+    "170",
+    "157",
+    "140"
+   ],
+   "kd": "80690",
+   "ka": "80716",
+   "lado": "",
+   "calz": "B",
+   "ancho": "3.50",
+   "esp": "15",
+   "esp2": "",
+   "esp3": "",
+   "obs": "Se recomienda no tender espesores mayores a 15 cm ya que podemos tener repercusiones en alcanzar la compactación.",
+   "lon": ""
+  },
+  {
+   "cam": "GZ-4925-A",
+   "vol": "",
+   "mue": "11",
+   "sal": "13:44",
+   "des": "15:49",
+   "t": [
+    "170",
+    "167",
+    "145"
+   ],
+   "kd": "80716",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  }
+ ],
+ "reg": {
+  "emp": "PLACOSA SA DE CV",
+  "res": "Ing. Luis Contreras ",
+  "clima": "Soleado",
+  "tamb": "31",
+  "ubic": "",
+  "lat": "19.000592",
+  "lng": "-104.243927",
+  "notas": ""
+ },
+ "fotos": [
+  {
+   "id": "pmwo2pw8erw421",
+   "cap": "Mapa satelital",
+   "ubic": true,
+   "mapa": true,
+   "file": "pmwo2pw8erw421.jpg"
+  }
+ ],
+ "upd": 1795125065066,
+ "resumen": {
+  "viajes": 1,
+  "vol": 13.65,
+  "del": "80+690",
+  "al": "80+716",
+  "fotos": 1,
+  "emp": "PLACOSA SA DE CV"
+ },
+ "id": "L1795125065066"
+}
