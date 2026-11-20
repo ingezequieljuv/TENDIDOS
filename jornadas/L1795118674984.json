@@ -1,0 +1,330 @@
+{
+ "tipo": "REAL",
+ "h": {
+  "fecha": "2026-11-19",
+  "recibo": "2026-11-19",
+  "ensaye": "",
+  "obra": "Ampliación Armería - Manzanillo ",
+  "ubic": "",
+  "capa": "Base Asfaltica",
+  "planta": "El Colomo GSI",
+  "desv": "",
+  "espproy": "",
+  "lab": "Ing.Cesar Ezequiel Tafoya Garibay",
+  "jefe": "Ing.Julio César Rojas Miranda"
+ },
+ "c": {
+  "km": "88720",
+  "ancho": "3.30",
+  "esp": "4",
+  "esp2": "",
+  "esp3": "15",
+  "nesp": "2",
+  "lado": "IZQ",
+  "calz": "B",
+  "tx": [
+   "157",
+   "146",
+   "133"
+  ],
+  "tn": [
+   "153",
+   "141",
+   "128"
+  ],
+  "vcam": "14"
+ },
+ "rows": [
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "LD-57-140",
+   "vol": "",
+   "mue": "4",
+   "sal": "10:34",
+   "des": "14:00",
+   "t": [
+    "",
+    "153",
+    "140"
+   ],
+   "lado": "",
+   "calz": "B",
+   "ancho": "4.85",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": "",
+   "kd": "88720",
+   "ka": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  }
+ ],
+ "reg": {
+  "emp": "PLACOSA SA DE CV",
+  "res": "",
+  "clima": "",
+  "tamb": "",
+  "ubic": "",
+  "lat": "19.059481",
+  "lng": "-104.269266",
+  "notas": ""
+ },
+ "fotos": [
+  {
+   "id": "pmwnz8u99o147o",
+   "cap": "Mapa satelital",
+   "ubic": true,
+   "mapa": true,
+   "file": "pmwnz8u99o147o.jpg"
+  }
+ ],
+ "upd": 1795123598583,
+ "resumen": {
+  "viajes": 0,
+  "vol": 0,
+  "del": "88+720",
+  "al": "88+720",
+  "fotos": 1,
+  "emp": "PLACOSA SA DE CV"
+ },
+ "id": "L1795118674984"
+}
