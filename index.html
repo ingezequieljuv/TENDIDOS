@@ -157,7 +157,7 @@ table.cap select{appearance:auto}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="sync-top"></span></span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v8</span> <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
@@ -645,7 +645,7 @@ async function runSync(){
   }catch(e){
     const st=e&&e.status;
     if(st===401){setSync("⚠️ token vencido");$("cloud-msg").textContent="Tu token ya no sirve (venció o lo cambiaste). Toca Cambiar token y pega uno nuevo."}
-    else if(st===403||st===404){setSync("⚠️ sin permiso");$("cloud-msg").textContent="Tu token no tiene permiso en el repositorio tendidos. En GitHub edita el token: Repository access debe incluir tendidos y Contents debe decir Read and write."}
+    else if(st===403||st===404){setSync("⚠️ sin permiso");$("cloud-msg").textContent=`GitHub no deja guardar con este token (error ${st}). En github.com/settings/personal-access-tokens abre tu token → Edit: en Repository access marca tendidos y en Permissions pon Contents en Read and write → Update. No tienes que volver a pegarlo; toca Sincronizar ahora.`}
     else{setSync("sin señal, pendiente de subir");$("cloud-msg").textContent="No se pudo terminar. Se vuelve a intentar sola cuando regrese la señal."}
   }finally{syncing=false;PULLING=false;if(again){again=false;setTimeout(runSync,800)}}
 }
@@ -883,5 +883,12 @@ fillForm();initStore();
   if(!assets){$("ph-hint").textContent="Las fotos solo se pueden agregar desde tu cuenta en la app de Claude.";}})();
 </script>
 
-<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<script>
+if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
+  try{const had=!!navigator.serviceWorker.controller;const reg=await navigator.serviceWorker.register("sw.js",{updateViaCache:"none"});
+    const chk=()=>reg.update().catch(()=>{});chk();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")chk()});
+    let done=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!had||done)return;done=true;
+      if(typeof dirty!=="undefined"&&dirty){toast("Hay una versión nueva de la app. Guarda tu jornada y vuelve a abrirla.");return}location.reload()});
+  }catch(e){}});
+</script>
 </body></html>
