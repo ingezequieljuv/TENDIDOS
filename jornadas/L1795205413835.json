@@ -1,0 +1,355 @@
+{
+ "tipo": "REAL",
+ "h": {
+  "fecha": "2026-11-20",
+  "recibo": "2026-11-20",
+  "ensaye": "20112601",
+  "obra": "Ampliación Armería - Manzanillo ",
+  "ubic": "Tramo Tepalcates II",
+  "capa": "Base Asfaltica",
+  "planta": "El Colomo GCI",
+  "desv": "",
+  "espproy": "",
+  "lab": "Ing. César Ezequiel Tafoya Garibay",
+  "jefe": "Ing. Julio César Rojas Miranda"
+ },
+ "c": {
+  "km": "88800",
+  "dir": "-1",
+  "ancho": "3.90",
+  "esp": "5",
+  "esp2": "",
+  "esp3": "20",
+  "nesp": "2",
+  "lado": "CARRIL ALTA",
+  "calz": "A",
+  "tx": [
+   "157",
+   "146",
+   "133"
+  ],
+  "tn": [
+   "153",
+   "141",
+   "128"
+  ],
+  "vcam": "14"
+ },
+ "rows": [
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "523-EK-8",
+   "vol": "",
+   "mue": "12",
+   "sal": "11:39",
+   "des": "14:00",
+   "t": [
+    "170",
+    "",
+    ""
+   ],
+   "kd": "88800",
+   "ka": "88772",
+   "lado": "CARRIL ALTA",
+   "calz": "A",
+   "ancho": "3.9",
+   "esp": "5",
+   "esp2": "",
+   "esp3": "20",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  },
+  {
+   "cam": "",
+   "vol": "",
+   "mue": "",
+   "sal": "",
+   "des": "",
+   "t": [
+    "",
+    "",
+    ""
+   ],
+   "kd": "",
+   "ka": "",
+   "lado": "",
+   "calz": "",
+   "ancho": "",
+   "esp": "",
+   "esp2": "",
+   "esp3": "",
+   "obs": "",
+   "lon": ""
+  }
+ ],
+ "reg": {
+  "emp": "PLACOSA SA DE CV",
+  "res": "",
+  "clima": "Soleado",
+  "tamb": "32",
+  "ubic": "",
+  "lat": "19.060074",
+  "lng": "-104.269303",
+  "notas": ""
+ },
+ "fotos": [
+  {
+   "id": "pmwpeizkpryy8l",
+   "cap": "Mapa satelital",
+   "ubic": true,
+   "mapa": true,
+   "file": "pmwpeizkpryy8l.jpg"
+  }
+ ],
+ "upd": 1795205413835,
+ "resumen": {
+  "viajes": 1,
+  "vol": 13.65,
+  "del": "88+800",
+  "al": "88+772",
+  "fotos": 1,
+  "emp": "PLACOSA SA DE CV"
+ },
+ "id": "L1795205413835"
+}
