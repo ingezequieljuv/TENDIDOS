@@ -157,7 +157,7 @@ table.cap select{appearance:auto}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v8</span> <span id="sync-top"></span></span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v9</span> <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
@@ -468,11 +468,10 @@ function refreshCalc(){
   const f=$("tbl").tFoot;f.querySelector('[data-o="tv"]').textContent=C.tv||"";f.querySelector('[data-o="tl"]').textContent=C.tl?C.tl.toFixed(1):"";
   const a=num(J.c.ancho),e=espDef(),vc=num(J.c.vcam)??14,k0=pkm(J.c.km),sg=J.c.dir==="-1"?-1:1;
   const per=(a&&e&&vc)?(vc/(a*e/100)):null;
-  const kmd=m=>{if(m==null)return"";const k=Math.floor(m/1000),r=m-k*1000;return k+"+"+(Math.round(r*10)/10).toFixed(1).padStart(5,"0")};
+  const kmd=m=>{if(m==null||!isFinite(m))return"";m=Math.round(m*10)/10;const k=Math.floor(m/1000),r=m-k*1000;return k+"+"+r.toFixed(1).padStart(5,"0")};
   const box=(t,v,sub)=>`<div class="rb"><span>${t}</span><b>${v}</b>${sub?`<small>${sub}</small>`:""}</div>`;
   $("c-res").innerHTML=per?box(`Longitud con ${f2(vc)} m³`,per.toFixed(1)+" m",`${f2(a)} m de ancho · ${f2(e)} cm${nEsp()>1?" (promedio)":""} · ${sg>0?"suma":"resta"}`)+
-    (k0!=null?box("Desde el km inicial llega al",kmd(k0+sg*per),`del ${kmd(k0)}`):"")+
-    (C.fin!=null&&C.tl?box("Siguiente camión llega al",kmd(C.fin+sg*per),`sale del ${kmd(C.fin)}`):"")
+    (k0!=null?box("Desde el km inicial llega al",kmd(k0+sg*per),`del ${kmd(k0)}`):"")
     :'<p class="muted" style="margin:0">Pon ancho, espesor y volumen del camión para saber hasta qué cadenamiento llega.</p>';
   $("c-dist").textContent=C.fin!=null&&C.tl?`Tramo de hoy: ${km(C.ini)} al ${km(C.fin)} (${C.tl.toFixed(1)} m, ${C.tv} m³).`:"";
 }
