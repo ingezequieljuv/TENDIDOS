@@ -106,11 +106,13 @@ table.cap tfoot td{font-weight:600;padding:5px;background:var(--field)}
 #sheet .kv{display:grid;grid-template-columns:90px 1fr 150px 130px}
 #sheet .kv div,#sheet .kv div *{font:400 11px/1.35 Arial,Helvetica,sans-serif;color:var(--paper-ink)}
 #sheet .kv div{padding:3px 6px}
+#sheet .kv div:not(.v){font-weight:700}
 #sheet .kv .v{border:0}
-#sheet .grid th{border:.5px solid var(--paper-grid);background:#f4f5f6;font-size:8.5px;font-weight:400;padding:3px 2px;text-align:center}
+#sheet .grid th{border:.5px solid var(--paper-grid);background:#f4f5f6;font-size:8.5px;font-weight:700;padding:3px 2px;text-align:center}
 #sheet .grid td{border:.5px solid var(--paper-grid);height:21px;text-align:center;font-size:10.5px}
 #sheet .firmas{display:grid;grid-template-columns:1fr 1fr;border:.5px solid var(--paper-grid);border-top:0}
 #sheet .firmas div{height:62px;padding:4px;text-align:center;font-size:10px}
+#sheet .firmas b{font-weight:700}
 #sheet .firmas div+div{border-left:.5px solid var(--paper-grid)}
 /* Registro de obra: fotos, ubicación, empresas */
 textarea{font:400 1rem var(--f-body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px;min-height:90px;resize:vertical;width:100%}
@@ -158,7 +160,7 @@ table.cap select{appearance:auto}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v10</span> <span id="sync-top"></span></span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v11</span> <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
@@ -783,15 +785,15 @@ function buildSheet(){
   let rows="";J.rows.forEach((r,i)=>{const c=C.rows[i];const on=c.on;
     rows+=`<tr><td>${esc(r.cam)}</td><td>${on&&c.vol!=null?c.vol:""}</td><td>${esc(r.mue)}</td><td>${esc(r.sal)}</td><td>${esc(r.des)}</td><td>${esc(r.t[0])}</td><td>${esc(r.t[1])}</td><td>${esc(r.t[2])}</td><td>${on?km(c.del):""}</td><td>${on?km(c.al):""}</td><td>${on?esc(r.lado||J.c.lado):""}</td><td>${on?esc(r.calz||J.c.calz):""}</td><td>${on&&c.a?c.a.toFixed(2):""}</td><td>${on&&c.e!=null?(nEsp()>1?`<span style="font-size:8.5px">${espVals(r).map(v=>v==null?"":f2(v)).join(" / ")}</span><br><b>${f2(c.e)}</b>`:f2(c.e)):""}</td>${i===0?`<td rowspan="${NROWS}" style="vertical-align:top;text-align:left;padding:4px">${J.rows.filter(x=>x.obs).map(x=>esc(x.cam?x.cam+": ":"")+esc(x.obs)).join("<br>")}</td>`:""}</tr>`});
   $("sheet").innerHTML=`<div class="hd"><div><h3>JUVISA INGENIERIA, S.A. DE C.V.</h3><h4>INFORME DE TENDIDO Y CONTROL DE TEMPERATURA DE MEZCLA ASFALTICA ELABORADA EN CALIENTE</h4></div><img src="${LOGO}" style="width:190px;justify-self:end"></div>
-  <div class="box kv"><div>OBRA:</div><div class="v">${esc(h.obra)}</div><div style="text-align:right">ENSAYES No.</div><div class="v">${esc(h.ensaye)}</div>
+  <div class="box kv"><div>OBRA:</div><div class="v">${esc(h.obra)}</div><div style="text-align:right">ENSAYES No.:</div><div class="v">${esc(h.ensaye)}</div>
   <div></div><div></div><div style="text-align:right">FECHA DE RECIBO:</div><div class="v">${fmtF(h.recibo)}</div>
   <div>UBICACIÓN:</div><div class="v">${esc(h.ubic)}</div><div style="text-align:right">FECHA DE INFORME:</div><div class="v">${fmtF(h.fecha)}</div></div>
-  <div class="box kv" style="grid-template-columns:90px 1fr 90px 1fr 260px 80px"><div>CAPA</div><div class="v">${esc(h.capa)}</div><div></div><div></div><div style="text-align:right">ESPESOR DE PROYECTO DE LA CAPA (CM):</div><div class="v">${esc(h.espproy)}</div>
-  <div>PLANTA EN :</div><div class="v">${esc(h.planta)}</div><div>DESVIACIÓN</div><div class="v">${esc(h.desv)}</div><div style="text-align:right">ESPESOR ANTES DE COMPACTAR (CM):</div><div class="v">${esc(espTxt())}</div></div>
+  <div class="box kv" style="grid-template-columns:90px 1fr 90px 1fr 260px 80px"><div>CAPA:</div><div class="v">${esc(h.capa)}</div><div></div><div></div><div style="text-align:right">ESPESOR DE PROYECTO DE LA CAPA (CM):</div><div class="v">${esc(h.espproy)}</div>
+  <div>PLANTA EN:</div><div class="v">${esc(h.planta)}</div><div>DESVIACIÓN:</div><div class="v">${esc(h.desv)}</div><div style="text-align:right">ESPESOR ANTES DE COMPACTAR (CM):</div><div class="v">${esc(espTxt())}</div></div>
   <table class="grid" style="margin-top:8px"><thead><tr><th colspan="2">VIAJES</th><th rowspan="2" style="width:52px">No. DE MUESTRA</th><th colspan="2">HORAS</th><th colspan="3">TEMPERATURAS DE LA MEZCLA, (°C)</th><th colspan="5">TENDIDO</th><th rowspan="2" style="width:80px">ESPESOR DE CAPA TENDIDA (ANTES DE COMPACTAR) (cm)${nEsp()>1?`<br>${EKEYS().map(k=>ELAB[k].toUpperCase()).join(" / ")} · PROM.`:""}</th><th rowspan="2" style="width:150px">OBSERVACIONES</th></tr>
   <tr><th style="width:80px">CAMION</th><th style="width:40px">VOL. (m³)</th><th>SALIDA PLANTA</th><th>DESCARGA TRAMO</th><th>AL SALIR DE LA PLANTA</th><th>AL TENDER</th><th>AL COMPACTAR</th><th>DEL KM.</th><th>AL KM.</th><th>LADO O FRANJA</th><th>CALZADA O CUERPO</th><th>ANCHO (m)</th></tr></thead>
   <tbody>${rows}<tr><td></td><td style="font-weight:700">${C.tv||""}</td><td colspan="13"></td></tr></tbody></table>
-  <div class="firmas"><div>LABORATORISTA<br><br><br>${esc(h.lab)}</div><div>JEFE DE CONTROL DE CALIDAD<br><br><br>${esc(h.jefe)}</div></div>`;
+  <div class="firmas"><div><b>LABORATORISTA:</b><br><br><br>${esc(h.lab)}</div><div><b>JEFE DE CONTROL DE CALIDAD:</b><br><br><br>${esc(h.jefe)}</div></div>`;
 }
 function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
 const fname=ext=>`TENDIDO ${J.tipo==="REAL"?"REAL":"CALCULADO"} ${fmtF(J.h.fecha).replace(/\//g,"-")}.${ext}`;
