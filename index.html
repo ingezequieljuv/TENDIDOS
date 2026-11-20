@@ -23,7 +23,7 @@
 :root{
   --bg:#ffffff; --surface:#ffffff; --field:#f6f7f5; --ink:#1c2226; --muted:#5d676c; --line:#d9ddd8;
   --accent:#f2b705; --accent-ink:#1c2226; --asphalt:#2b3136; --hi:#f2b705; --hi-soft:#fff6d6; --ok:#2f7d4f; --warn:#b3362c;
-  --paper:#ffffff; --paper-ink:#111111; --paper-line:#222222;
+  --paper:#ffffff; --paper-ink:#111111; --paper-line:#8e959b; --paper-grid:#b8bec3;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -102,15 +102,16 @@ table.cap tfoot td{font-weight:600;padding:5px;background:var(--field)}
 #sheet .hd{display:grid;grid-template-columns:1fr 210px;align-items:center}
 #sheet .hd h3{font:700 18px "Times New Roman",serif;text-align:center;margin:0 0 10px}
 #sheet .hd h4{font:700 15px "Times New Roman",serif;text-align:center;margin:0}
-#sheet .box{border:1px solid var(--paper-line);margin-top:8px}
-#sheet .kv{display:grid;grid-template-columns:90px 1fr 150px 130px;font-size:10px}
-#sheet .kv div{padding:4px 5px}
-#sheet .kv .v{border-bottom:1px solid var(--paper-line)}
-#sheet .grid th{border:1px solid var(--paper-line);font-size:8.5px;font-weight:400;padding:3px 2px;text-align:center}
-#sheet .grid td{border:1px solid var(--paper-line);height:21px;text-align:center;font-size:10.5px}
-#sheet .firmas{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--paper-line);border-top:0}
+#sheet .box{border:1px solid var(--paper-line);margin-top:8px;padding:2px 0}
+#sheet .kv{display:grid;grid-template-columns:90px 1fr 150px 130px}
+#sheet .kv div,#sheet .kv div *{font:400 11px/1.35 Arial,Helvetica,sans-serif;color:var(--paper-ink)}
+#sheet .kv div{padding:3px 6px}
+#sheet .kv .v{border:0}
+#sheet .grid th{border:.5px solid var(--paper-grid);background:#f4f5f6;font-size:8.5px;font-weight:400;padding:3px 2px;text-align:center}
+#sheet .grid td{border:.5px solid var(--paper-grid);height:21px;text-align:center;font-size:10.5px}
+#sheet .firmas{display:grid;grid-template-columns:1fr 1fr;border:.5px solid var(--paper-grid);border-top:0}
 #sheet .firmas div{height:62px;padding:4px;text-align:center;font-size:10px}
-#sheet .firmas div+div{border-left:1px solid var(--paper-line)}
+#sheet .firmas div+div{border-left:.5px solid var(--paper-grid)}
 /* Registro de obra: fotos, ubicación, empresas */
 textarea{font:400 1rem var(--f-body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:4px;padding:8px;min-height:90px;resize:vertical;width:100%}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
@@ -157,7 +158,7 @@ table.cap select{appearance:auto}
     <button id="t-cam" role="tab" aria-selected="false" data-tab="cam">Camiones</button>
     <button id="t-emp" role="tab" aria-selected="false" data-tab="emp">Empresas</button>
   </nav>
-  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v9</span> <span id="sync-top"></span></span></div>
+  <div class="hsub"><span class="proy">Supervisión Ampliación Armería – Manzanillo</span><span class="sup">Supervisor: Ing. César Ezequiel Tafoya Garibay · JUVISA <span id="app-v">· v10</span> <span id="sync-top"></span></span></div>
 </div></header>
 
 <main>
